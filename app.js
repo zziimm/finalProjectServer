@@ -8,7 +8,9 @@ const cors = require('cors');
 const paasport = require('passport');
 
 dotenv.config();
-console.log(process.env.PORT);
+
+// 라우터 넣을 곳
+const shopRouter = require('./routers/shop')
 
 const { connect } = require('./database/index');
 
@@ -41,6 +43,11 @@ app.use(session({
 }));
 app.use(paasport.initialize());
 app.use(paasport.session());
+
+
+// 미들웨어 라우터 넣을 곳
+
+app.use('/shop', shopRouter);
 
 
 
