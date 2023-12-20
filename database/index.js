@@ -6,8 +6,6 @@ const { MongoClient } = require('mongodb');
 
 const { MONGO_ID, MONGO_PASSWORD } = process.env;
 const url = `mongodb+srv://${MONGO_ID}:${MONGO_PASSWORD}@cluster0.kafipby.mongodb.net/?retryWrites=true&w=majority`;
-console.log(process.env.MONGO_ID);
-console.log('MONGO_ID'+MONGO_ID);
 // const url = `mongodb+srv://${MONGO_ID}:${MONGO_PASSWORD}@cluster0.kafipby.mongodb.net/`;
 const client = new MongoClient(url);
 

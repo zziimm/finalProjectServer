@@ -8,9 +8,8 @@ const cors = require('cors');
 const paasport = require('passport');
 
 dotenv.config();
-console.log(process.env.PORT);
-
 const { connect } = require('./database/index');
+const communityRouter = require('./routes/community');
 
 const app = express();
 app.set('port', process.env.PORT || 8088);
@@ -44,6 +43,7 @@ app.use(paasport.session());
 
 
 
+app.use('/community', communityRouter)
 
 
 
