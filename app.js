@@ -8,11 +8,16 @@ const cors = require('cors');
 const paasport = require('passport');
 
 dotenv.config();
+console.log(process.env.PORT);
+
+const { connect } = require('./database/index');
 
 const app = express();
 app.set('port', process.env.PORT || 8088);
 // passportConfig();
-// connect();
+connect();
+
+
 
 app.use(cors({
   origin: 'https://minton1000.netlify.app',
