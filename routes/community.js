@@ -110,7 +110,7 @@ router.post('/editShopItem/:itemId', upload.single('img'), async (req, res) => {
   };
   try {
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('shop').updateOne({ brand }, { $set: { title, price, age, size, tag, imgUrl, imgKey } });
+    await db.collection('shop').updateOne({ _id: thisItem._id }, { $set: { brand, title, price, age, size, tag, imgUrl, imgKey } });
     run();
     res.json({
       flag: true,
