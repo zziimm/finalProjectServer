@@ -10,6 +10,7 @@
   "author": "HJJ",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.1523.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
