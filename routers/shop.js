@@ -4,6 +4,35 @@ const db = client.db('lastTeamProject');
 const { ObjectId } = require('mongodb');
 const router = express.Router();
 
+// S3
+const multer = require('multer');
+const multerS3 = require('multer-s3');
+const { S3Client } = require('@aws-sdk/client-s3');
+const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+
+// S3
+const s3 = new S3Client({
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY,
+    secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET
+  },
+  region: 'ap-northeast-2'
+});
+
+// S3 클라이언트
+const upload = multer({
+  storage: multerS3({
+    s3,
+    bucket: 'finaltp',
+    key(req, file, cb) {
+      cb(null, `original/${Date.now()}_${file.originalname}`)
+    }
+  }),
+  limits: { fieldSize: 5 * 1024 * 1024 }
+});
+
+
 router.get('/q', (req, res) => {
   try {
     const test = db.collection('shop').insertOne({
