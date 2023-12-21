@@ -23,7 +23,7 @@ module.exports = () => {
         // 비밀번호
         const result = await bcrypt.compare(passwd, exitUser.passwd)
         // 비밀번호가 틀리면
-        if (!reuslt) {
+        if (!result) {
           return done(null, false, { message: '비밀번호가 일치하지 않습니다'})
         }
 

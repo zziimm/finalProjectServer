@@ -10,6 +10,7 @@
   "author": "HJJ",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.478.0",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -20,6 +21,7 @@
     "mongodb": "^6.3.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "multer-s3": "^3.0.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0"
   },
