@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <!-- <link rel="stylesheet" href="/css/main.css"> -->
+</head>
+<body class="grey-bg">
+
+  <!-- 사진이 포함된 글 / 쇼핑아이템 넣는 창 -->
+  <!-- aws상에 업로드 됩니다 이거 -->
+
+  <!-- 파일을 보낼땐 enctype 기본값 말고 multipart -->
+  <form id="write-form" class="form-box" action="/community/insertShopItem" method="post" enctype="multipart/form-data">
+    <h4>쇼핑몰 데이터 넣기</h4>
+    <!-- input의 데이터를 보내는 방법:
+      name 속성 필수 작성(작명한 이름으로 서버에 데이터 전달) -->
+    <label for="brand">브랜드명</label>
+    <input type="text" id="brand" name="brand"> <br>
+    <label for="title">상품명</label>
+    <input type="text" id="title" name="title"> <br>
+    <label for="price">가격</label>
+    <input type="number" id="price" name="price"> <br>
+    <label for="age">권장 애견 나이(~5, ~10, 11~)</label>
+    <input type="number" id="age" name="age"> <br>
+    <label for="size">권장 애견 사이즈(small, medium, big)</label>
+    <input type="text" id="size" name="size"> <br>
+    <label for="tag">상품태그(feed, snack, beauty, accessory)</label>
+    <input type="text" id="tag" name="tag"> <br>
+
+      <!-- accept 속성이 이미지 파일을 강제하는 것은 아님,
+        이미지 파일이 맞는지는 JS로 확장자 검사,
+        확실하게 하려면 서버에서 검사 -->
+        <!-- (중요) 파일을 서버로 전송하고 싶으면 인코딩 타입을 multipart/form-data -->
+      <label for="img">이미지</label>
+      <input type="file" id="img" name="img" accept="image/*"><br>
+
+    <button type="submit">등록</button>
+
+    <!-- 커뮤니티 게시글 생성기 -->
+  <!-- </form>
+  <form id="write-form" class="form-box" action="/community/insertShopItem" method="post" enctype="multipart/form-data">
+    <h4>쇼핑몰 데이터 넣기</h4>
+
+    <label for="title">제목</label>
+    <input type="text" id="title" name="title"> <br>
+    <label for="content">내용</label>
+    <input type="text" id="content" name="content"> <br>
+
+      <label for="img">이미지</label>
+      <input type="file" id="img" name="img" accept="image/*"><br>
+
+    <button type="submit">등록</button>
+  </form> -->
+
+</body>
+</html>

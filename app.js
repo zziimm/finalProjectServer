@@ -9,10 +9,13 @@ const paasport = require('passport');
 
 dotenv.config();
 const { connect } = require('./database/index');
+const testRouter = require('./routes/index');
 const communityRouter = require('./routes/community');
 
 const app = express();
 app.set('port', process.env.PORT || 8088);
+app.set('view engine', 'ejs');
+
 // passportConfig();
 connect();
 
@@ -42,7 +45,7 @@ app.use(paasport.initialize());
 app.use(paasport.session());
 
 
-
+app.use('/', testRouter);
 app.use('/community', communityRouter)
 
 
