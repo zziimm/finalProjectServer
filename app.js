@@ -8,18 +8,16 @@ const cors = require('cors');
 const passport = require('passport');
 
 dotenv.config();
-console.log(process.env.PORT);
-
 const { connect } = require('./database/index');
+const app = express();
 const passportConfig = require('./passport');
 
 
 // 라우터 가져오기
 const userRouter = require('./routes/user')
 const mainRouter = require('./routes/index')
-
-
-const app = express();
+const testRouter = require('./routes/index');
+const communityRouter = require('./routes/community');
 app.set('port', process.env.PORT || 8088);
 passportConfig();
 connect();
@@ -50,10 +48,11 @@ app.use(session({
 }));
 
 
+app.use('/', testRouter);
+app.use('/community', communityRouter)
 // passport 미들웨어 설정
 app.use(passport.initialize());
 app.use(passport.session());
-
 
 
 // req.user 사용
