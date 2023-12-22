@@ -1,0 +1,132 @@
+body {
+  margin: 0;
+}
+
+a {
+  text-decoration: none;
+  color: black;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background : white;
+}
+nav a {
+  margin-right: 10px;
+}
+.logo {
+  font-weight: bold;
+}
+
+main {
+  padding: 0 15px;
+}
+
+/* 글 목록 */
+.grey-bg {
+  background: #eee;
+}
+.white-bg {
+  background: white;
+  margin: 20px;
+  border-radius: 5px;
+}
+.list-box {
+  padding : 10px;
+  border-bottom: 1px solid#eee;
+}
+.list-box h4{
+  font-size: 16px;
+  margin: 5px;
+}
+.list-box p {
+  font-size: 13px;
+  margin: 5px;
+  color: grey;
+}
+
+/* 글 작성 */
+input, div {
+  box-sizing: border-box;
+}
+.form-box {
+  background : white;
+  padding : 25px;
+  margin: 20px;
+  border-radius: 8px;
+}
+.form-box input {
+  padding : 10px;
+  font-size: 16px;
+  width: 100%;
+  border: 1px solid black;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+.form-box button {
+  padding: 10px;
+  border : none;
+  background : lightgrey;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* 글 상세 */
+.detail-bg {
+  background: white;
+  padding: 15px;
+  margin: 20px;
+  border-radius: 8px;
+}
+
+/* 페이지네이션 */
+.pagination-bg {
+  margin: 0 20px;
+  display: flex;
+  justify-content: center;
+}
+.pagination-bg > a {
+  padding: 15px;
+  background: white;
+  color: #3366ff;
+}
+.pagination-bg > a:hover {
+  text-shadow: 0.5px 0.5px 1px;
+}
+.pagination-bg > a.active {
+  background: #3366ff;
+  color: white;
+}
+
+.next-bg {
+  margin: 0 20px;
+  display: flex;
+}
+.next-bg > a {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+}
+.next-bg > a:hover {
+  background: lightgray;
+}
+
+/* 검색 UI */
+.search {
+  margin: 20px 0 0 20px;
+  padding: 5px;
+}
+.search-btn {
+  padding: 6px 10px;
+  background: lightgray;
+  border: none;
+  border-radius: 5px;
+  vertical-align: middle;
+  cursor: pointer;
+} 
