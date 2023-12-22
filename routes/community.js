@@ -206,7 +206,7 @@ router.get('/talk/detail/:postId', async (req, res) => {
   });
 });
 
-// 커뮤니티 삽입_자랑
+// 커뮤니티 삽입_육아톡톡
 router.post('/talk/insert', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
@@ -228,7 +228,7 @@ router.post('/talk/insert', upload.single('img'), async (req, res) => {
   }
 });
 
-// 수정 (이미지)_자랑
+// 수정 (이미지)_육아톡톡
 router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
   const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
   console.log(req.file);
@@ -238,7 +238,7 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
 
-  // aws에서 데이터 삭제
+  // aws에서 데이터 육아톡톡
   const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
   const run = async () => {
     try {
@@ -260,7 +260,7 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
     console.error(err);
   }
 });
-// 삭제_자랑
+// 삭제_육아톡톡
 router.delete('/talk/delete/:postId', async (req, res) => {
   const postId = req.params.postId;
   try {
@@ -285,7 +285,7 @@ router.delete('/talk/delete/:postId', async (req, res) => {
   }
 });
 
-// 댓글달기_자랑
+// 댓글달기_육아톡톡
 router.post('/talk/comment/:postId', async (req, res) => {
   const postId = req.params.postId;
   const user = req.user._id;
@@ -310,6 +310,18 @@ router.post('/talk/comment/:postId', async (req, res) => {
   }
 });
 
+// 좋아요_육아톡톡
+router.post('/talk/like/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const loginUser = req.user._id;
+  try {
+    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId)});
+    thisPost.like?.find();
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: loginUser } });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 
 
