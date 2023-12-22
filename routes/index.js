@@ -7,7 +7,8 @@ const router = express.Router();
 
 // GET '/' 라우터
 router.get('/', (req, res) => {
-  res.render('write.ejs');
+  const KAKAOKEY = process.env.KAKAO_KEY;
+  res.render('write.ejs', { KAKAOKEY });
 });
 
 
