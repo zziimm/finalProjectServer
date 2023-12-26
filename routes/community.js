@@ -36,11 +36,15 @@ const upload = multer({
 // 모든 커뮤니티 정보
 router.get('/', async (req, res) => {
   try {
-    const data = await db.collection('community').find({}).toArray();
+    const bestViewPost = await db.collection('community').find({}).sort({view: -1}).limit(5).toArray();
+    const recentPost = await db.collection('community').find({type: 'talk'}).sort({_id: -1}).limit(5).toArray();
+    const recentExchange = await db.collection('exchange').find({}).sort({_id: -1}).limit(10).toArray();
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
-      data
+      bestViewPost,
+      recentPost,
+      recentExchange
     });
   } catch (err) {
     console.error(err);
@@ -63,14 +67,14 @@ router.get('/brag', async (req, res) => {
 router.get('/brag/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-  const userData = await db.collection('userInfo').findOne({ _id: postData._id });
+  // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
   const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
     postData,
-    userData,
     commentData
+    // userData,
   });
 });
 
@@ -157,13 +161,13 @@ router.delete('/brag/delete/:postId', async (req, res) => {
 router.post('/brag/comment/:postId', async (req, res) => {
   const postId = req.params.postId;
   const user = req.user._id;
-  const username = req.user.username;
+  const userId = req.user.userId;
   const comment = req.body.comment;
   const date = req.body.date;
   try {
     await db.collection('comment').insertOne({
       user,
-      username,
+      userId,
       comment,
       date,
       postId: new ObjectId(postId),
@@ -195,13 +199,13 @@ router.get('/talk', async (req, res) => {
 router.get('/talk/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-  const userData = await db.collection('userInfo').findOne({ _id: postData._id });
+  // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
   const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
     postData,
-    userData,
+    // userData,
     commentData
   });
 });
@@ -289,13 +293,13 @@ router.delete('/talk/delete/:postId', async (req, res) => {
 router.post('/talk/comment/:postId', async (req, res) => {
   const postId = req.params.postId;
   const user = req.user._id;
-  const username = req.user.username;
+  const userId = req.user.userId;
   const comment = req.body.comment;
   const date = req.body.date;
   try {
     await db.collection('comment').insertOne({
       user,
-      username,
+      userId,
       comment,
       date,
       postId: new ObjectId(postId),
@@ -324,6 +328,56 @@ router.post('/talk/like/:postId', async (req, res) => {
 });
 
 
+
+router.get('/exchange', async (req, res) => {
+  try {
+    const exchangePost = await db.collection('exchange').find({}).toArray();
+    res.json({
+      flag: true,
+      message: '불러오기 성공(중고)',
+      exchangePost
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+router.get('/exchange/detail/:postId', async (req, res) => {
+  const exchangePostId = req.params.postId
+  const postData = await db.collection('exchange').findOne({ _id: new ObjectId(exchangePostId) });
+  // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
+  const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
+  res.json({
+    flag: true,
+    message: '데이터 불러오기 성공(상세보기)',
+    postData,
+    // userData,
+    commentData
+  });
+});
+
+// 커뮤니티 삽입_중고아이템
+router.post('/exchange/insert', upload.single('img'), async (req, res) => {
+  // const userId = req.user._id;
+  // const inputdata = req.body.inputdata;
+  const title = req.body.title;
+  const content = req.body.content;
+  const price = req.body.price;
+  const author = req.body.author;
+  const imgUrl = req.file?.location || '';
+  const imgKey = req.file?.key || '';
+
+  try {
+    // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
+    await db.collection('exchange').insertOne({ title, content, price, author, imgUrl, imgKey });
+    res.json({
+      flag: true,
+      message: '데이터 저장 성공(중고)'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 
 
@@ -410,4 +464,61 @@ router.get('/shop', async (req, res) => {
     posts
   });
 });
+
+// 상품정보 불러오기(초기 8개, 더보기 시 8개 추가)
+// 상품 태그별로 보여주기 feed
+router.get('/shop/feed', async (req, res) => {
+  let posts;
+  if (req.query.nextId) {
+    posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) }, tag: 'feed' }).limit(8).toArray();
+  } else {
+    posts = await db.collection('shop').find({ tag: 'feed' }).limit(8).toArray();
+  }
+  // res.render('write.ejs', { posts })
+  res.json({
+    flag: true,
+    message: '성공적으로 상품을 가져왔습니다.(feed)',
+    posts
+  });
+});
+
+// 장바구니 추가
+router.post('/plusCart', async (req, res) => {
+  const title = req.body.title;
+  const price = req.body.price;
+  const postId = req.body.postId;
+  const count = req.body.count;
+  try {
+    const user = req.user._id;
+    await db.collection('cart').insertOne({ title, price, count, user });
+    res.json({
+      flag: true,
+      message: '장바구니 추가 완료'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 수량 1개씩 추가 버튼
+router.post('/plusCount', async (req, res) => {
+  const postId = req.body.postId;
+  const user = req.user._id;
+  try {
+    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 }});
+  } catch (err) {
+    console.error(err);
+  }
+});
+router.post('/minusCount', async (req, res) => {
+  const postId = req.body.postId;
+  const user = req.user._id;
+  try {
+    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 }});
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+
 module.exports = router;
