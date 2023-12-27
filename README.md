@@ -11,3 +11,16 @@ https://cdn.imweb.me/thumbnail/20231023/98458d898e543.jpg
 https://cdn-pro-web-218-48.cdn-nhncommerce.com/krystal1581463850_godomall_com/data/goods/23/02/06/1000000135/register_detail_0100.jpg
 https://petdome.co.kr/data/goods/76/2023/04/98992_temp_16824121177096view.jpg
 https://image.hmall.com/static/5/4/09/17/2117094504_0.jpg?RS=600x600&AR=0
+
+
+
+  <!-- 상품 다음버튼 테스트 -->
+  <hr>
+  <% posts.forEach((post) => { %>
+    <img style="width: 150px;" src="<%= post.imgUrl %>" alt="">
+    <p><%= post.title %></p>
+  <% }) %>
+  <div></div>
+  <div class="next-bg">
+    <a href="/community/shop/feed?nextId=<%= posts[posts.length - 1]?._id %>">다음</a>
+  </div>

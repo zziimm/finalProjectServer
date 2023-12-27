@@ -474,12 +474,13 @@ router.get('/shop/feed', async (req, res) => {
   } else {
     posts = await db.collection('shop').find({ tag: 'feed' }).limit(8).toArray();
   }
-  // res.render('write.ejs', { posts })
-  res.json({
-    flag: true,
-    message: '성공적으로 상품을 가져왔습니다.(feed)',
-    posts
-  });
+  console.log(posts);
+  res.render('write.ejs', { posts })
+  // res.json({
+  //   flag: true,
+  //   message: '성공적으로 상품을 가져왔습니다.(feed)',
+  //   posts
+  // });
 });
 
 // 장바구니 추가
