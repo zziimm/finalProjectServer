@@ -7,14 +7,22 @@ const path = require('path');
 const cors = require('cors');
 const passport = require('passport');
 
+const app = express();
+
+// socket.io
+const http = require('http').createServer(app);
+// const { Server } = require('socket.io');
+const io = require('socket.io')(http);
+// const io = new Server(http);
+
 dotenv.config();
 
 
 // 라우터 넣을 곳
 const shopRouter = require('./routers/shop')
 const { connect } = require('./database/index');
-const app = express();
 const passportConfig = require('./passport');
+
 
 
 // 라우터 가져오기
@@ -31,7 +39,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 
 app.use(cors({
-  origin: 'https://minton1000.netlify.app',
+  // origin: 'https://minton1000.netlify.app',
   credentials: true
 }));
 app.use(morgan('dev'));
@@ -77,6 +85,21 @@ app.use((req, res, next) => {
 app.use('/user', userRouter)
 app.use('/', mainRouter)
 
+// socket 테스트
+app.get('/socket', (req, res) => {
+  res.render('socket.ejs');
+})
+// socket
+io.on('connection', (socket) => {
+  console.log('유저접속됨');
+
+  socket.on('userSend', (msg) => {
+    console.log('유저가 보낸 메세지:', msg.msg);
+    console.log('유저아이디:', msg.id);
+    io.emit('sendMsg', msg);
+  });
+});
+
 
 
 app.use((req, res, next) => {
@@ -93,6 +116,6 @@ app.use((err, req, res, next) => {
   res.render('error');
 });
 
-app.listen(app.get('port'), () => {
+http.listen(app.get('port'), () => {
   console.log(app.get('port') + '번에서 서버 실행 중입니다.');
 });
