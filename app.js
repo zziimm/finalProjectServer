@@ -8,6 +8,10 @@ const cors = require('cors');
 const passport = require('passport');
 
 dotenv.config();
+
+
+// 라우터 넣을 곳
+const shopRouter = require('./routers/shop')
 const { connect } = require('./database/index');
 const app = express();
 const passportConfig = require('./passport');
@@ -48,11 +52,18 @@ app.use(session({
 }));
 
 
+// 미들웨어 라우터 넣을 곳
+
+app.use('/shop', shopRouter);
+
+
+
 app.use('/', testRouter);
 app.use('/community', communityRouter)
 // passport 미들웨어 설정
 app.use(passport.initialize());
 app.use(passport.session());
+
 
 
 // req.user 사용
