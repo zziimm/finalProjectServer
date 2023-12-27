@@ -491,7 +491,7 @@ router.post('/plusCart', async (req, res) => {
   const count = req.body.count;
   try {
     const user = req.user._id;
-    await db.collection('cart').insertOne({ title, price, count, user });
+    await db.collection('cart').insertOne({ title, price, count, postId: new ObjectId(postId), user });
     res.json({
       flag: true,
       message: '장바구니 추가 완료'
@@ -520,6 +520,114 @@ router.post('/minusCount', async (req, res) => {
     console.error(err);
   }
 });
+
+
+// 상품 상세페이지 가져오기
+router.get('/shop/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
+    // 상세정보 더미 만들고 내려줘야함 (지금없음)
+    // const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '상세정보 불러오기 성공',
+      itemDetail,
+  
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 상세페이지_리뷰 가져오기
+router.get('/shop/review/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const itemReview = await db.collection('review').find({ postId: new ObjectId(postId) }).toArray();
+    res.json({
+      flag: true,
+      message: '리뷰 불러오기 성공',
+      itemReview
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 상세페이지_리뷰 작성하기
+router.post('/shop/reviewInsert/:postId', upload.single('img'), async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    console.log(postId);
+    const brand = req.body.brand;
+    const title = req.body.title;
+    const content = req.body.content;
+    const date = req.body.date;
+    const imgUrl = req.file?.location || '';
+    const imgKey = req.file?.key || '';
+    await db.collection('review').insertOne({ brand, title, content, date, postId, imgUrl, imgKey });
+    res.json({
+      flag: true,
+      message: '리뷰 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '리뷰 등록 실패'
+    });
+  };
+});
+
+// 상품 상세페이지_Q&A 가져오기
+router.get('/shop/qna/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId
+    const itemQna = await db.collection('qna').find({ postId: new ObjectId(postId) }).toArray();
+    res.json({
+      flag: true,
+      message: 'Q&N 불러오기 성공',
+      itemQna
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 Q&A 작성하기
+router.post('/shop/qna/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const title = req.body.title;
+    const content = req.body.content;
+    await db.collection('qna').insertOne({ title, content, postId: new ObjectId(postId), status: '답변대기' });
+    res.json({
+      flag: true,
+      message: 'Q&N 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 Q&A 답변하기
+router.patch('/shop/qnaComment/:qnaPostId', async (req, res) => {
+  try {
+    const qnaPostId = req.params.qnaPostId;
+    const answer = req.body.answer;
+    await db.collection('qna').updateOne({ _id: new ObjectId(qnaPostId) }, { $set: { answer } });
+    await db.collection('qna').updateOne({ _id: new ObjectId(qnaPostId) }, { $set: { status: '답변완료' } });
+    res.json({
+      flag: true,
+      message: 'Q&N 답변 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+
 
 
 module.exports = router;

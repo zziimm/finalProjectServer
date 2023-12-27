@@ -92,11 +92,12 @@ app.get('/socket', (req, res) => {
 // socket
 io.on('connection', (socket) => {
   console.log('유저접속됨');
-
-  socket.on('userSend', (msg) => {
-    console.log('유저가 보낸 메세지:', msg.msg);
-    console.log('유저아이디:', msg.id);
-    io.emit('sendMsg', msg);
+  
+  socket.on('userSend', (data) => {
+    console.log('유저가 보낸 메세지:', data.msg);
+    console.log('유저아이디:', data.id);
+    socket.join(data.room);
+    io.to(data.room).emit('sendMsg', data);
   });
 });
 
