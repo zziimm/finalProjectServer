@@ -5,19 +5,28 @@ const session = require('express-session');
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
-const paasport = require('passport');
+const passport = require('passport');
 
 dotenv.config();
 
+
 // 라우터 넣을 곳
 const shopRouter = require('./routers/shop')
-
 const { connect } = require('./database/index');
-
 const app = express();
+const passportConfig = require('./passport');
+
+
+// 라우터 가져오기
+const userRouter = require('./routes/user')
+const mainRouter = require('./routes/index')
+const testRouter = require('./routes/index');
+const communityRouter = require('./routes/community');
 app.set('port', process.env.PORT || 8088);
-// passportConfig();
+passportConfig();
 connect();
+app.set('view engine', 'ejs'); 
+app.set('views', path.join(__dirname, 'views')); 
 
 
 
@@ -41,8 +50,6 @@ app.use(session({
   },
   name: 'session-cookie'
 }));
-app.use(paasport.initialize());
-app.use(paasport.session());
 
 
 // 미들웨어 라우터 넣을 곳
@@ -51,9 +58,24 @@ app.use('/shop', shopRouter);
 
 
 
+app.use('/', testRouter);
+app.use('/community', communityRouter)
+// passport 미들웨어 설정
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 
+// req.user 사용
+app.use((req, res, next) => {
+  res.locals.user = req.user;
+  next();
+});
+
+
+// 라우터를 미들웨어로 등록
+app.use('/user', userRouter)
+app.use('/', mainRouter)
 
 
 

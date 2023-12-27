@@ -1,0 +1,17 @@
+<nav>
+  <div>
+    <a href="/" class="logo">GoniBoard</a>
+    <a href="/post">List</a>
+    <a href="/post/write">Write</a>
+  </div>
+
+  <div>
+    <% if (user) { %>
+      <%= user.userId %>님😍
+        <a href="/user/logout">Logout</a>
+        <% } else { %>
+          <a href="/user/login">Login</a>
+          <a href="/user/register">Join</a>
+          <% } %>
+  </div>
+</nav>
