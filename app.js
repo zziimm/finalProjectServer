@@ -18,6 +18,7 @@ const userRouter = require('./routes/user')
 const mainRouter = require('./routes/index')
 const testRouter = require('./routes/index');
 const communityRouter = require('./routes/community');
+const vintageCommunityRouter = require('./routes/vintage')
 app.set('port', process.env.PORT || 8088);
 passportConfig();
 connect();
@@ -65,6 +66,7 @@ app.use((req, res, next) => {
 // 라우터를 미들웨어로 등록
 app.use('/user', userRouter)
 app.use('/', mainRouter)
+app.use('/vintage', vintageCommunityRouter)
 
 
 

@@ -318,7 +318,6 @@ router.post('/talk/comment/:postId', async (req, res) => {
 // ---------------------------shop
 
 
-
 // 쇼핑몰아이템 삽입
 router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;

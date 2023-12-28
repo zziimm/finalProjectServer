@@ -38,7 +38,7 @@ const upload = multer({
 // 중고커뮤
 router.get('/', async (req, res) => {
   try {
-    const data = await db.collection('community').find({ type: 'vintage' }).toArray()
+    const data = await db.collection('vincommunity').find({ type: 'vintage' }).toArray()
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(중고)',
@@ -51,10 +51,12 @@ router.get('/', async (req, res) => {
 
 router.get('/detail/:postId', async (req, res) => {
   const postId = req.params.postId
-  const postData = await db.colleciont('community').findOne({ _id: new ObjectId(postId)})
+  const postData = await db.colleciont('vincommunity').findOne({ _id: new ObjectId(postId)})
   const userData = await db.collection('userInfo').findOne({ _id: postData._id })
   // 조회수
-  const views = await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $inc: { views: 1 }  })
+  const views = await db.collection('vincommunity').updateOne({ _id: new ObjectId(postId) }, { $inc: { views: 1 }  })
+    res.render('vintage', { postData, userData, views });
+
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
@@ -64,6 +66,9 @@ router.get('/detail/:postId', async (req, res) => {
   })
 })
 
+router.get('/insert', (req, res) => {
+  res.render('insert.ejs');
+});
 
 // 커뮤니티 삽입_중고
 router.post('/insert', upload.array('img'), async (req, res) => {
@@ -72,9 +77,12 @@ router.post('/insert', upload.array('img'), async (req, res) => {
   const dog = req.user.dogSpecies
   const imgUrl = req.files?.location || ''
   const imgKey = req.files?.key || ''
+  console.log('-------------------');
+    console.log(username);
+
   
   try {
-    await db.collection('community').insertOne({
+    await db.collection('vincommunity').insertOne({
     username, dog, title, content, price, category, date, imgUrl, imgKey, type: 'vintage'
     })
     res.json({
@@ -87,9 +95,11 @@ router.post('/insert', upload.array('img'), async (req, res) => {
   }
 })
 
+
+
 // 수정 (이미지)_중고
-router.patch('/edit/:postId', upload.array('img'), async (req, res) => {
-  const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
+router.post('/edit/:postId', upload.array('img'), async (req, res) => {
+  const thisPost = await db.collection('vincommunity').findOne({ _id: req.params.postId });
   const { title, content, price, category } = req.body;
   const imgUrl = req.files?.location || ''
   const imgKey = req.files?.key || ''
@@ -106,7 +116,7 @@ router.patch('/edit/:postId', upload.array('img'), async (req, res) => {
   };
   try {
     // 제목, 글, 가격, 카테고리, 이미지만 수정 가능
-    await db.collection('community').updateOne({ _id: thisPost._id }, { $set: { title, content, price, category, imgUrl, imgKey } });
+    await db.collection('vincommunity').updateOne({ _id: thisPost._id }, { $set: { title, content, price, category, imgUrl, imgKey } });
     run();
     res.json({
       flag: true,
@@ -120,7 +130,7 @@ router.patch('/edit/:postId', upload.array('img'), async (req, res) => {
 // 커뮤니티 삭제_중고
 router.post('/delete', async (req, res) => {  // 커뮤니티 게시글 삭제
   try {
-    const del = await db.collection('community').deleteOne({
+    const del = await db.collection('vincommunity').deleteOne({
       _id: new ObjectId(req.body.postId)
     });
     res.json({
@@ -132,3 +142,5 @@ router.post('/delete', async (req, res) => {  // 커뮤니티 게시글 삭제
     console.error(err);
   }
 })
+
+module.exports = router;
