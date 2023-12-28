@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body class="grey-bg">
+
+  <form id="write-form" class="form-box" action="/vintage/insert" method="post" enctype="multipart/form-data">
+    <h4>글쓰기</h4>
+    <label for="title">상품명</label>
+    <input type="text" id="title" name="title">
+
+    <label for="content">내용</label>
+    <input type="text" id="content" name="content">
+
+    <label for="price">가격</label>
+    <input type="text" id="price" name="price">
+
+    <label for="category">카테고리</label>
+    <input type="text" id="category" name="category">
+
+    <label for="date">날짜</label>
+    <input type="text" id="date" name="date">
+
+
+
+    <button type="submit">등록</button>
+  </form>
+
+  <!-- Quiz: write.js 만들어서 글 작성 기능을 Ajax 요청으로 바꿔보기 -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="/js/write.js"></script>
+</body>
+
+</html>
