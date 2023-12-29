@@ -53,22 +53,35 @@ const upload = multer({
  *      tags: [community]
  *      responses:
  *        '200':
- *          description: 전체 게기슬 정보
+ *          description: 전체 게시글 정보
  *          content:
  *            application/json:
  *              schema:
- *                type: object
  *                  properties:
- *                    ok:
+ *                    flag:
  *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
  *                    community:
  *                      type: object
  *                      example:
  *                        [
- *                          { title: 'ee', content: '123' }                         
- *                          { title: 'qq', content: '123' }                         
- *                          { title: 'ww', content: '123' }                         
- *                         ]
+ *                          bestViewPost: [
+ *                          { title: 'string', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                          recentPost: [
+ *                          { title: 'ee', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                          recentExchange: [
+ *                          { title: 'ee', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                        ]
  */
 
 // 모든 커뮤니티 정보
@@ -89,6 +102,32 @@ router.get('/', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * paths: 
+ *  /community/brag:
+ *    get:
+ *      summary: '자랑 커뮤니티 정보 조회'
+ *      description: '자랑 게시물 전체를 불러옵니다.'
+ *      tags: [community]
+ *      responses:
+ *        '200':
+ *          description: 자랑 게시글 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                  properties:
+ *                    flag:
+ *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
+ *                    data: 
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          { title: 'string', content: 'string' }
+ *                        ]
+ */
 // 자랑 커뮤니티
 router.get('/brag', async (req, res) => {
   try {
@@ -102,6 +141,41 @@ router.get('/brag', async (req, res) => {
     console.error(err);
   }
 });
+
+/**
+ * @swagger
+ * paths: 
+ *  /community/brag/{postId}:
+ *    get:
+ *      summary: '자랑 게시물 디테일 정보 조회'
+ *      description: '자랑 게시물의 id 값을 보낸다'
+ *      tags: [community]
+ *      parameters:
+ *      - in: path
+ *        name: postId
+ *        required: true
+ *        description: 게시글 아이디
+ *        schema:
+ *          type: string
+ *      responses:
+ *        '200':
+ *          description: 자랑 게시글 디테일 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                  properties:
+ *                    flag:
+ *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
+ *                    data: 
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          { title: 'string', content: 'string' }
+ *                        ]
+ */
+
 router.get('/brag/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
@@ -115,6 +189,8 @@ router.get('/brag/detail/:postId', async (req, res) => {
     // userData,
   });
 });
+
+
 
 // 커뮤니티 삽입_자랑
 router.post('/brag/insert', upload.single('img'), async (req, res) => {

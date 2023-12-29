@@ -74,7 +74,7 @@ app.use('/community', communityRouter)
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/community-docs', swaggerUi.serve, swaggerUi.setup(specs));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // req.user 사용
 app.use((req, res, next) => {

@@ -9,7 +9,12 @@ const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
 
 
-
+/**
+ * @swagger
+ * tags:
+ *  name: user
+ *  description: 로그인 및 회원가입
+ */
 
 
 // 회원가입
