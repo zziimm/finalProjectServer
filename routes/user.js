@@ -39,6 +39,59 @@ const upload = multer({
 });
 
 
+
+
+/**
+ * @swagger
+ * tags:
+ *   name: 사용자
+ *   description: 사용자 관련 작업
+ */
+
+/**
+ * @swagger
+ * /user/register:
+ *   post:
+ *     summary: 사용자 회원가입
+ *     description: 사용자 정보를 받아 회원가입을 처리합니다.
+ *     tags: [사용자]
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: 사용자 ID
+ *               passwd:
+ *                 type: string
+ *                 description: 사용자 비밀번호
+ *               email:
+ *                 type: string
+ *                 description: 사용자 이메일
+ *               dog:
+ *                 type: string
+ *                 description: 사용자의 반려견 정보
+ *               dogSpecies:
+ *                 type: string
+ *                 description: 반려견의 종류
+ *               dogAge:
+ *                 type: number
+ *                 description: 반려견의 나이
+ *               dogName:
+ *                 type: string
+ *                 description: 반려견의 이름
+ *     responses:
+ *       200:
+ *         description: 회원가입 성공
+ *       400:
+ *         description: 잘못된 요청 또는 입력
+ *       500:
+ *         description: 서버 오류
+ */
+
+
 router.post('/register', async (req, res) => {
   const { userId, passwd, email, dog, dogSpecies, dogAge, dogName } = req.body
   
@@ -100,8 +153,6 @@ router.post('/register', async (req, res) => {
     })
   }
 })
-
-
 
 
 

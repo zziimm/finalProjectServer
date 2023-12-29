@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
 const passport = require('passport');
+const api = require('./swagger/swagger')
 
 const app = express();  
 
@@ -64,14 +65,17 @@ app.use(session({
 // 미들웨어 라우터 넣을 곳
 
 app.use('/shop', shopRouter);
-
-
-
 app.use('/', testRouter);
 app.use('/community', communityRouter)
 // passport 미들웨어 설정
 app.use(passport.initialize());
 app.use(passport.session());
+
+
+//swagger-------------------------
+// app.use("/api", api)
+const { swaggerUi, specs } = require("./swagger/swagger")
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs))
 
 
 
