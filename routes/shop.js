@@ -9,6 +9,7 @@ const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const e = require('express');
 
 
 // S3
@@ -49,15 +50,15 @@ router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   // 두개를 따로 나눠서 저장해도되고 선택!
   const imgKey = req.file?.key || '';
 
-  try {
-    await db.collection('shop').insertOne({ brand, title, price, age, size, tag, imgUrl, imgKey });
-    res.json({
-      flag: true,
-      message: '데이터 저장 성공(쇼핑)'
-    });
-  } catch (err) {
-    console.error(err);
-  }
+try {
+  await db.collection('shop').insertOne({ brand, title, price, age, size, tag, imgUrl, imgKey });
+  res.json({
+    flag: true,
+    message: '데이터 저장 성공(쇼핑)'
+  });
+} catch (err) {
+  console.error(err);
+}
 });
 // 수정 (이미지)
 router.post('/brag/editShopItem/:itemId', upload.single('img'), async (req, res) => {
@@ -82,9 +83,9 @@ router.post('/brag/editShopItem/:itemId', upload.single('img'), async (req, res)
     } catch (err) {
       console.error(err);
     }
-  };
+  }
   try {
-    // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
+    // await db.collection('commubuty').insertOne({...inputdata, userId, imgUrl});
     await db.collection('shop').updateOne({ _id: thisItem._id }, { $set: { brand, title, price, age, size, tag, imgUrl, imgKey } });
     run();
     res.json({
@@ -103,13 +104,7 @@ router.get('/shop', async (req, res) => {
   } else {
     posts = await db.collection('shop').find({}).limit(8).toArray();
   }
-  // res.render('write.ejs', { posts })
-  res.json({
-    flag: true,
-    message: '성공적으로 상품을 가져왔습니다.',
-    posts
-  });
-});
+})
 
 // 상품정보 불러오기(초기 8개, 더보기 시 8개 추가)
 // 상품 태그별로 보여주기 feed
@@ -122,37 +117,38 @@ router.get('/shop/feed', async (req, res) => {
   }
   console.log(posts);
   res.render('write.ejs', { posts })
-  // res.json({
-  //   flag: true,
-  //   message: '성공적으로 상품을 가져왔습니다.(feed)',
-  //   posts
-  // });
+  res.json({
+    flag: true,
+    message: '성공적으로 상품을 가져왔습니다.(feed)',
+    posts
+  });
 });
 
 // 장바구니 추가
-router.post('/plusCart', async (req, res) => {
+router.post('plusCart', async (req, res) => {
   const title = req.body.title;
   const price = req.body.price;
   const postId = req.body.postId;
   const count = req.body.count;
   try {
-    const user = req.user._id;
-    await db.collection('cart').insertOne({ title, price, count, user });
+    const user = req.user_id;
+    const cart = await db.collection('cart').insertOne({ title, price, postId, count, user });
     res.json({
       flag: true,
-      message: '장바구니 추가 완료'
-    });
+      message: '장바구니 추가 완료',
+      cart
+    })
   } catch (err) {
     console.error(err);
   }
-});
+})
 
 // 수량 1개씩 추가 버튼
 router.post('/plusCount', async (req, res) => {
   const postId = req.body.postId;
   const user = req.user._id;
   try {
-    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 }});
+    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 } })
   } catch (err) {
     console.error(err);
   }
@@ -168,13 +164,11 @@ router.post('/minusCount', async (req, res) => {
 });
 
 
+
 router.get(`/qqq`, async (req, res) => {
-  // const { 123 } = req.body;
-  const abc = '6583a5a6f703dc24018568c1'
-  console.log(123);
-  const count = await db.collection('shop').updateOne({ _id: new ObjectId('6583a5a6f703dc24018568c1') }, {$inc: { view: 1 }});
+  const count = await db.collection('shop').updateOne({ _id: new ObjectId('658b7cb691630cf88f029506') }, {$inc: { view: 1 }});
   console.log('카운트',count);
-  const result = await db.collection('shop').findOne({ _id: new ObjectId('6583a5a6f703dc24018568c1') });
+  const result = await db.collection('shop').findOne({ _id: new ObjectId('658b7cb691630cf88f029506') });
   console.log(result);
   res.json({
     flag: true,
@@ -192,17 +186,17 @@ router.post('/delete', async (req, res) => {
       throw new Error('삭제 실패');
     }
     res.json({
-      flag: true, 
+      flag: true,
       message: '삭제 성공'
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({
-      flag: false,
+      falg: false,
       message: err.message
-    });
+    })
   }
-});
+})
 
 
 // 장바구니 C
@@ -215,7 +209,11 @@ router.get('/w', (req, res) => {
       amount: 2,
       item: 'box'
     })
-    res.send('ok')
+    res.json({
+      flag: true,
+      message: '성공',
+      test
+    })
   } catch (err) {
     console.error(err);
   }
@@ -232,63 +230,43 @@ router.get('/baskets', (req, res) => {
 
 // 장바구니 U
 
-router.post("/:productId/basket", async (req, res) => {
+router.post("/basket", async (req, res) => {
   const { productId } = req.params;
   const { quantity } = req.body;
 
-  isBasket = await Basket.find({ productId });
+  const isBasket = await db.collection('basket').find({ productId });
   console.log(isBasket, quantity);
   if (isBasket.length) {
-    await Basket.updateOne({ productId }, { $set: { quantity } });
-  } else {
-    await Basket.create({ productId: productId, quantity: quantity });
+    await db.collection('basket').updateOne({ productId }, { $set: { quantity } });
   }
-  res.send({ result: "success" });
+  // res.send({ result: "success" });
+  res.json({
+    flag: true,
+    message: '성공',
+    isBasket
+})
 });
-
-
-
 
 // 장바구니 D
 
-router.delete("/:productId/basket", async (req, res) => {
-  const { productId } = req.params;
-
-  const isProductsInBasket = await Basket.find({ productId });
-  if (isProductsInBasket.length > 0) {
-    await Basket.deleteOne({ productId });
-  }
-
-  res.send({ result: "success" });
-});
-
-
-// router.patch("/:productId/basket", async (req, res) => {
-//   const { productId } = req.params;
-//   const { quantity } = req.body;
-
-//   isBasket = await Basket.find({ productId });
-//   console.log(isBasket, quantity);
-//   if (isBasket.length) {
-//     await Basket.updateOne({ productId }, { $set: { quantity } });
-//   }
-
-//   res.send({ result: "success" });
-// })
-
-router.patch("/basketq", async (req, res) => {
-  // const { productId } = req.params;
-  // const { quantity } = req.body;
-  const productId = 10
-  const quantity = 'box'
-
-  isBasket = await db.collection('basket').find({ productId });
-  console.log(isBasket, quantity);
-  if (isBasket.length) {
-    await db.collection(basket).updateOne({ productId }, { $set: { quantity } });
-  }
-
-  res.send({ result: "success" });
+router.post('/deleted', (req, res) => {
+  db.collection('basket').deleteOne({ 
+    _id : new ObjectId('6583e1222c062a33effd8be2')
+  })
+  res.json({
+    falg: true,
+    message: '성공'
+  })
 })
+
+router.get('/basketss', async (req, res) => {
+  const basket = db.collection('basket').find({}).toArray();
+  res.json({
+    flag: true,
+    message: '성공',
+    basket
+  })
+})
+
 
 module.exports = router;
