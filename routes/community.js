@@ -11,6 +11,16 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { client } = require('../database/index');
 const db = client.db('lastTeamProject');
 
+/**
+ * @swagger
+ * tags:
+ *  name: Community
+ *  description: 커뮤니티 정보 조회
+ */
+
+
+
+
 const router = express.Router();
 // S3
 const s3 = new S3Client({
@@ -32,6 +42,34 @@ const upload = multer({
   }),
   limits: { fieldSize: 5 * 1024 * 1024 }
 });
+
+/**
+ * @swagger
+ * paths: 
+ *  /community:
+ *    get:
+ *      summary: '커뮤니티 전체 정보 조회'
+ *      description: '최다 조회수 게시글 5개, 최근 게시글 5개, 중고장터 게시글 10개'
+ *      tags: [community]
+ *      responses:
+ *        '200':
+ *          description: 전체 게기슬 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                  properties:
+ *                    ok:
+ *                      type: boolean
+ *                    community:
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          { title: 'ee', content: '123' }                         
+ *                          { title: 'qq', content: '123' }                         
+ *                          { title: 'ww', content: '123' }                         
+ *                         ]
+ */
 
 // 모든 커뮤니티 정보
 router.get('/', async (req, res) => {

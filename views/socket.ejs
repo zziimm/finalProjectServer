@@ -18,27 +18,55 @@
   
   <button id="send">서버로 데이터 보내기</button>
 
+  <button id="in">하하 서버로 입장하기</button>
+  <button id="out">하하 서버에서 나가기</button>
+
 
   <script>
     var socket = io();
-    document.getElementById('send').addEventListener('click', (e) => {
-      socket.emit('userSend', '안녕하세요~')
-    })
+    
+    document.getElementById('in').addEventListener('click', (e) => {
+      document.getElementById('exRoom').value = '하하'
+      const id = document.getElementById('exId').value;
+      const server = '하하';
+      const data = {id, server};
+      
+      socket.emit('getIn', data);
+    });
+    document.getElementById('out').addEventListener('click', (e) => {
+      document.getElementById('exRoom').value = ''
+      const id = document.getElementById('exId').value;
+      const server = '하하';
+      const data = {id, server};
+
+      socket.emit('getOut', data);
+    });
     
     
-    // const room = document.getElementById('exRoom').value;
-    // const id = document.getElementById('exId').value;
-    socket.on('user', (alert) => {
+    
+    socket.on('close', (msg) => {
+      console.log(msg);
       const message = document.getElementById('messages');
       const li = document.createElement('li');
-      li.textContent = alert;
+      li.textContent = msg;
+      message.appendChild(li);
+    })
+    socket.on('open', (msg) => {
+      console.log(msg);
+      const message = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = msg;
+      message.appendChild(li);
     })
 
     socket.on('sendMsg', (data) => {
       console.log(data);
+      if (!data) {
+        return alert('아무 방에도 들어가 있지않습니다');
+      }
       const message = document.getElementById('messages');
       const li = document.createElement('li');
-      li.textContent = data.id + data.msg;
+      li.textContent = data.id + ': ' + data.msg;
       message.appendChild(li);
     })
     
@@ -51,6 +79,7 @@
       const msg = input.value;
       const data = { room, id, msg }
       socket.emit('userSend', data)
+      input.value = '';
     })
   </script>
 </body>
