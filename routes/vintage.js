@@ -33,37 +33,33 @@ const upload = multer({
   limits: { fieldSize: 5 * 1024 * 1024 }
 });
 
-// router.get('/upload', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'multipart.html'));
-// });
-
 
 
 // 중고커뮤
 router.get('/', async (req, res) => {
-  const posts = await db.collection('vincommunity').find().skip((req.query.page - 1) * 5).limit(5).toArray();
-  const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
   const postsPerPage = 5; // 페이지 당 콘텐츠 개수
-  const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
   const currentPage = req.query.page || 1; // 현재 페이지
-
-  res.render('vintage', { posts, numOfPage, currentPage });
+  
+  const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
+  // console.log(posts);
+  const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
+  const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
+  res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
 });
 
 router.get('/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const posts = await db.collection('vincommunity').findOne({ _id: new ObjectId(postId)})
-  const userData = await db.collection('userInfo').findOne({ _id: posts._id })
-  console.log(userData);
+
   // 조회수
   const views = await db.collection('vincommunity').updateOne({ _id: new ObjectId(postId) }, { $inc: { views: 1 }  })
-    res.render('vintage', { posts, userData, views });
+  // console.log(views);
+    res.render('vintage', { posts, views, user:req.user });
 
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
     posts,
-    userData,
     views
   })
 })
@@ -83,12 +79,13 @@ router.post('/insert', upload.array('img'), async (req, res) => {
 
   
   try {
-    await db.collection('vincommunity').insertOne({
-    title, content, price, category, imgUrl, imgKey
+    const data = await db.collection('vincommunity').insertOne({
+    title, content, price, category, imgUrl, imgKey, user:req.user
     })
     res.json({
       flag: true,
-      message: '데이터 저장 성공(커뮤니티_중고)'
+      message: '데이터 저장 성공(커뮤니티_중고)',
+      data
       })
 
   } catch (err) {
