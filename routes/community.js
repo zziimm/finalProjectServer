@@ -591,10 +591,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
 
 
 
-
-
 // ---------------------------shop
-
 
 
 // 쇼핑몰아이템 삽입

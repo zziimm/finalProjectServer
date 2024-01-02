@@ -56,7 +56,7 @@ router.post('/register', async (req, res) => {
     }
 
     if (email === '') {
-      throw new Error('닉네임을 입력해주세요!')
+      throw new Error('이메일을 입력해주세요!')
     }
 
     if (passwd === '') {

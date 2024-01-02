@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body class="grey-bg">
+
+  <form id="write-form" class="form-box" action="/vintage/insert" method="post" enctype="multipart/form-data">
+    <h4>글쓰기</h4>
+    <label for="title">상품명</label>
+    <input type="text" id="title" name="title">
+
+    <label for="content">내용</label>
+    <input type="text" id="content" name="content">
+
+    <label for="price">가격</label>
+    <input type="number" id="price" name="price">
+
+    <label for="category">카테고리( 의류 및 악세서리/ 강아지 케어 / 훈련 및 놀이 / 생활용품 )</label>
+    <input type="text" id="category" name="category">
+
+
+
+    <label for="img">이미지</label>
+    <input type="file" id="img" name="img" accept="image/*" multiple><br>
+
+
+
+    <button type="submit">등록</button>
+  </form>
+
+  <!-- <script src="/js/write.js"></script> -->
+</body>
+
+</html>

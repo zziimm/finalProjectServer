@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
   <!-- <link rel="stylesheet" href="/css/main.css"> -->
 </head>
+
 <body class="grey-bg">
 
   <!-- 사진이 포함된 글 / 쇼핑아이템 넣는 창 -->
@@ -29,17 +31,17 @@
     <label for="tag">상품태그(feed, snack, beauty, accessory)</label>
     <input type="text" id="tag" name="tag"> <br>
 
-      <!-- accept 속성이 이미지 파일을 강제하는 것은 아님,
+    <!-- accept 속성이 이미지 파일을 강제하는 것은 아님,
         이미지 파일이 맞는지는 JS로 확장자 검사,
         확실하게 하려면 서버에서 검사 -->
-        <!-- (중요) 파일을 서버로 전송하고 싶으면 인코딩 타입을 multipart/form-data -->
-      <label for="img">이미지</label>
-      <input type="file" id="img" name="img" accept="image/*"><br>
+    <!-- (중요) 파일을 서버로 전송하고 싶으면 인코딩 타입을 multipart/form-data -->
+    <label for="img">이미지</label>
+    <input type="file" id="img" name="img" accept="image/*"><br>
 
     <button type="submit">등록</button>
 
     <!-- 커뮤니티 게시글 생성기 -->
-  <!-- </form>
+    <!-- </form>
   <form id="write-form" class="form-box" action="/community/insertShopItem" method="post" enctype="multipart/form-data">
     <h4>쇼핑몰 데이터 넣기</h4>
 
@@ -53,6 +55,7 @@
 
     <button type="submit">등록</button>
   </form> -->
+
 
 
   <hr>
@@ -75,4 +78,5 @@
   <script src="/js/like.js"></script>
 
 </body>
+
 </html>
