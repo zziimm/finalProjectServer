@@ -34,6 +34,15 @@ const upload = multer({
 });
 
 
+/**
+ * @swagger
+ * tags:
+ *   name: 중고마켓 커뮤니티
+ *   description: 중고마켓 커뮤니티 관련 작업
+ */
+
+
+
 
 // 중고커뮤
 router.get('/', async (req, res) => {
