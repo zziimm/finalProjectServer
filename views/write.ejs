@@ -57,10 +57,25 @@
   </form> -->
 
 
-    <hr>
-    <!-- 상품 다음버튼 테스트 -->
-    <!-- README에 있음 -->
 
+  <hr>
+  <!-- 상품 다음버튼 테스트 -->
+  <!-- README에 있음 -->
+  <hr>
+  <h1>좋아요 테스트</h1>
+  <input type="text" id="name" name="name">닉네임
+  <div id="like">♥</div>
+  <div>
+    <% if (!post.like) { %>
+      0
+    <% } else { %>
+      <%= post.like.length %>
+    <% } %>
+  </div>
+
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="/js/like.js"></script>
 
 </body>
 

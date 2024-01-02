@@ -11,6 +11,16 @@ const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 const { client } = require('../database/index');
 const db = client.db('lastTeamProject');
 
+/**
+ * @swagger
+ * tags:
+ *  name: Community
+ *  description: 커뮤니티 정보 조회
+ */
+
+
+
+
 const router = express.Router();
 // S3
 const s3 = new S3Client({
@@ -33,6 +43,47 @@ const upload = multer({
   limits: { fieldSize: 5 * 1024 * 1024 }
 });
 
+/**
+ * @swagger
+ * paths: 
+ *  /community:
+ *    get:
+ *      summary: '커뮤니티 전체 정보 조회'
+ *      description: '최다 조회수 게시글 5개, 최근 게시글 5개, 중고장터 게시글 10개'
+ *      tags: [community]
+ *      responses:
+ *        '200':
+ *          description: 전체 게시글 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                  properties:
+ *                    flag:
+ *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
+ *                    community:
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          bestViewPost: [
+ *                          { title: 'string', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                          recentPost: [
+ *                          { title: 'ee', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                          recentExchange: [
+ *                          { title: 'ee', content: '123' },
+ *                          { title: 'qq', content: '123' },
+ *                          { title: 'ww', content: '123' }
+ *                          ],
+ *                        ]
+ */
+
 // 모든 커뮤니티 정보
 router.get('/', async (req, res) => {
   try {
@@ -51,10 +102,36 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 자랑 커뮤니티
-router.get('/brag', async (req, res) => {
+/**
+ * @swagger
+ * paths: 
+ *  /community/daily:
+ *    get:
+ *      summary: '자랑 커뮤니티 정보 조회'
+ *      description: '자랑 게시물 전체를 불러옵니다.'
+ *      tags: [community]
+ *      responses:
+ *        '200':
+ *          description: 자랑 게시글 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                  properties:
+ *                    flag:
+ *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
+ *                    data: 
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          { title: 'string', content: 'string' }
+ *                        ]
+ */
+// 데일리톡(일상) 커뮤니티
+router.get('/daily', async (req, res) => {
   try {
-    const data = await db.collection('community').find({ type: 'brag' }).toArray();
+    const data = await db.collection('community').find({ type: 'daily' }).toArray();
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
@@ -64,7 +141,42 @@ router.get('/brag', async (req, res) => {
     console.error(err);
   }
 });
-router.get('/brag/detail/:postId', async (req, res) => {
+
+/**
+ * @swagger
+ * paths: 
+ *  /community/daily/{postId}:
+ *    get:
+ *      summary: '자랑 게시물 디테일 정보 조회'
+ *      description: '자랑 게시물의 id 값을 보낸다'
+ *      tags: [community]
+ *      parameters:
+ *      - in: path
+ *        name: postId
+ *        required: true
+ *        description: 게시글 아이디
+ *        schema:
+ *          type: string
+ *      responses:
+ *        '200':
+ *          description: 자랑 게시글 디테일 정보
+ *          content:
+ *            application/json:
+ *              schema:
+ *                  properties:
+ *                    flag:
+ *                      type: boolean
+ *                    message: 
+ *                      type: 'string'
+ *                    data: 
+ *                      type: object
+ *                      example:
+ *                        [
+ *                          { title: 'string', content: 'string' }
+ *                        ]
+ */
+
+router.get('/daily/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
   // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
@@ -78,8 +190,10 @@ router.get('/brag/detail/:postId', async (req, res) => {
   });
 });
 
-// 커뮤니티 삽입_자랑
-router.post('/brag/insert', upload.single('img'), async (req, res) => {
+
+
+// 커뮤니티 삽입_데일리톡(일상)
+router.post('/daily/insert', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
@@ -90,7 +204,7 @@ router.post('/brag/insert', upload.single('img'), async (req, res) => {
 
   try {
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, type: 'brag'});
+    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, type: 'daily'});
     res.json({
       flag: true,
       message: '데이터 저장 성공(커뮤니티_자랑)'
@@ -100,8 +214,8 @@ router.post('/brag/insert', upload.single('img'), async (req, res) => {
   }
 });
 
-// 수정 (이미지)_자랑
-router.patch('/brag/edit/:postId', upload.single('img'), async (req, res) => {
+// 수정 (이미지)_데일리톡(일상)
+router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
   console.log(req.file);
   const title = req.body.title;
@@ -126,14 +240,14 @@ router.patch('/brag/edit/:postId', upload.single('img'), async (req, res) => {
     run();
     res.json({
       flag: true,
-      message: '데이터 수정 성공(커뮤니티_자랑)'
+      message: '데이터 수정 성공(커뮤니티_데일리톡(일상))'
     });
   } catch (err) {
     console.error(err);
   }
 });
-// 삭제_자랑
-router.delete('/brag/delete/:postId', async (req, res) => {
+// 삭제_데일리톡(일상)
+router.delete('/daily/delete/:postId', async (req, res) => {
   const postId = req.params.postId;
   try {
     const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
@@ -157,8 +271,8 @@ router.delete('/brag/delete/:postId', async (req, res) => {
   }
 });
 
-// 댓글달기_자랑
-router.post('/brag/comment/:postId', async (req, res) => {
+// 댓글달기_데일리톡(일상)
+router.post('/daily/comment/:postId', async (req, res) => {
   const postId = req.params.postId;
   const user = req.user._id;
   const userId = req.user.userId;
@@ -171,7 +285,7 @@ router.post('/brag/comment/:postId', async (req, res) => {
       comment,
       date,
       postId: new ObjectId(postId),
-      type: 'brag'
+      type: 'daily'
     });
     res.json({
       flag: true,
@@ -181,6 +295,76 @@ router.post('/brag/comment/:postId', async (req, res) => {
     console.error(err);
   }
 });
+
+// 좋아요_+_데일리톡(일상)
+router.post('/daily/like', async (req, res) => {
+  // const postId = req.params.postId;
+  const postId = req.body.postId;
+  const userId = req.user.userId;
+  try {
+    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId)});
+    thisPost.like?.find();
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
+    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '성공',
+      post
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+// 좋아요_-_데일리톡(일상)
+router.post('/daily/dislike', async (req, res) => {
+  // const postId = req.params.postId;
+  const postId = req.body.postId;
+  const userId = req.user.userId;
+  try {
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId } });
+    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '성공',
+      post
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 테스트 ----
+router.get('/test', async (req, res) => {
+  const post = await db.collection('community').findOne({ title: '123' });
+  res.render('write.ejs', { post });
+});
+// 좋아요 버튼이 토글이 아닐 때
+router.post('/test/like', async (req, res) => {
+  const id = '더미'
+  const thisPost = await db.collection('community').findOne({ title: '123' });
+  
+  try {
+    if (thisPost.like?.find(liked => liked === id)) {
+      throw new Error('이미 좋아요 누름')
+    } else {
+      await db.collection('community').updateOne({ title: '123' }, { $push: { like: id } });
+      res.json({
+        flag: true,
+        message: '성공'
+      })
+    }
+    
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
+});
+// 테스트 끝----
+
+
 
 
 // 육아톡톡 커뮤니티
@@ -196,6 +380,7 @@ router.get('/talk', async (req, res) => {
     console.error(err);
   }
 });
+
 router.get('/talk/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
@@ -264,6 +449,7 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
     console.error(err);
   }
 });
+
 // 삭제_육아톡톡
 router.delete('/talk/delete/:postId', async (req, res) => {
   const postId = req.params.postId;
@@ -314,14 +500,38 @@ router.post('/talk/comment/:postId', async (req, res) => {
   }
 });
 
-// 좋아요_육아톡톡
-router.post('/talk/like/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  const loginUser = req.user._id;
+// 좋아요_+_육아톡톡
+router.post('/talk/like', async (req, res) => {
+  // const postId = req.params.postId;
+  const postId = req.body.postId;
+  const userId = req.user.userId;
   try {
     const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId)});
     thisPost.like?.find();
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: loginUser } });
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
+    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '성공',
+      post
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+// 좋아요_-_육아톡톡
+router.post('/talk/dislike', async (req, res) => {
+  // const postId = req.params.postId;
+  const postId = req.body.postId;
+  const userId = req.user.userId;
+  try {
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId } });
+    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '성공',
+      post
+    });
   } catch (err) {
     console.error(err);
   }
@@ -411,7 +621,7 @@ router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   }
 });
 // 수정 (이미지)
-router.post('/brag/editShopItem/:itemId', upload.single('img'), async (req, res) => {
+router.post('/daily/editShopItem/:itemId', upload.single('img'), async (req, res) => {
   const thisItem = await db.collection('shop').findOne({ _id: req.params.itemId });
   console.log(req.file);
   const brand = req.body.brand;
@@ -488,7 +698,7 @@ router.post('/plusCart', async (req, res) => {
   const count = req.body.count;
   try {
     const user = req.user._id;
-    await db.collection('cart').insertOne({ title, price, count, user });
+    await db.collection('cart').insertOne({ title, price, count, postId: new ObjectId(postId), user });
     res.json({
       flag: true,
       message: '장바구니 추가 완료'
@@ -504,6 +714,13 @@ router.post('/plusCount', async (req, res) => {
   const user = req.user._id;
   try {
     await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 }});
+    const result = await db.collection('cart').findOne({ postId, user });
+    const count = result.count;
+    res.json({
+      flag: true,
+      message: '카운트 +1 성공',
+      count
+    });
   } catch (err) {
     console.error(err);
   }
@@ -512,11 +729,135 @@ router.post('/minusCount', async (req, res) => {
   const postId = req.body.postId;
   const user = req.user._id;
   try {
-    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 }});
+    const data = await db.collection('cart').findOne({ postId, user });
+    if (data.count === '1' ) {
+      throw new Error('1 이하로 감소시킬 수 없습니다');
+    } else {
+      await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 }});
+      const result = await db.collection('cart').findOne({ postId, user });
+      const count = result.count;
+      res.json({
+        flag: true,
+        message: '카운트 -1 성공',
+        count
+      });
+    }
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
+});
+
+
+// 상품 상세페이지 가져오기
+router.get('/shop/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
+    // 상세정보 더미 만들고 내려줘야함 (지금없음)
+    // const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '상세정보 불러오기 성공',
+      itemDetail,
+  
+    });
   } catch (err) {
     console.error(err);
   }
 });
+
+// 상품 상세페이지_리뷰 가져오기
+router.get('/shop/review/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const itemReview = await db.collection('review').find({ postId: new ObjectId(postId) }).toArray();
+    res.json({
+      flag: true,
+      message: '리뷰 불러오기 성공',
+      itemReview
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 상세페이지_리뷰 작성하기
+router.post('/shop/reviewInsert/:postId', upload.single('img'), async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    console.log(postId);
+    const brand = req.body.brand;
+    const title = req.body.title;
+    const content = req.body.content;
+    const date = req.body.date; 
+    const imgUrl = req.file?.location || '';
+    const imgKey = req.file?.key || '';
+    await db.collection('review').insertOne({ brand, title, content, date, postId, imgUrl, imgKey });
+    res.json({
+      flag: true,
+      message: '리뷰 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '리뷰 등록 실패'
+    });
+  };
+});
+
+// 상품 상세페이지_Q&A 가져오기
+router.get('/shop/qna/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId
+    const itemQna = await db.collection('qna').find({ postId: new ObjectId(postId) }).toArray();
+    res.json({
+      flag: true,
+      message: 'Q&N 불러오기 성공',
+      itemQna
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 Q&A 작성하기
+router.post('/shop/qna/:postId', async (req, res) => {
+  try {
+    const postId = req.params.postId;
+    const title = req.body.title;
+    const content = req.body.content;
+    await db.collection('qna').insertOne({ title, content, postId: new ObjectId(postId), status: '답변대기' });
+    res.json({
+      flag: true,
+      message: 'Q&N 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// 상품 Q&A 답변하기
+router.patch('/shop/qnaComment/:qnaPostId', async (req, res) => {
+  try {
+    const qnaPostId = req.params.qnaPostId;
+    const answer = req.body.answer;
+    await db.collection('qna').updateOne({ _id: new ObjectId(qnaPostId) }, { $set: { answer } });
+    await db.collection('qna').updateOne({ _id: new ObjectId(qnaPostId) }, { $set: { status: '답변완료' } });
+    res.json({
+      flag: true,
+      message: 'Q&N 답변 등록 완료'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+
 
 
 module.exports = router;
