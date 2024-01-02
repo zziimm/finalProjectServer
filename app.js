@@ -15,12 +15,14 @@ const http = require('http').createServer(app);
 // const { Server } = require('socket.io');
 const io = require('socket.io')(http);
 // const io = new Server(http);
+// Swagger
+const { swaggerUi, specs } = require('./swagger/swagger');
 
 dotenv.config();
 
 
 // 라우터 넣을 곳
-const shopRouter = require('./routers/shop')
+const shopRouter = require('./routes/shop')
 const { connect } = require('./database/index');
 const passportConfig = require('./passport');
 
@@ -72,12 +74,6 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-//swagger-------------------------
-// app.use("/api", api)
-const { swaggerUi, specs } = require("./swagger/swagger")
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs))
-
-
 
 // req.user 사용
 app.use((req, res, next) => {
@@ -97,12 +93,35 @@ app.get('/socket', (req, res) => {
 })
 // socket
 io.on('connection', (socket) => {
+  // 생각해보기 대화내용 db저장
+  // 채팅방 입장 시 chat 컬렉션에 title: 입장한 유저(2명)의 닉네임 데이터 생성
+  // 채팅할 때마다 
   console.log('유저접속됨');
+  
+  socket.on('getIn', (server) => {
+    console.log(server);
+    const msg = server.id + '님이 입장하였습니다!'
+    socket.join(server.server);
+    io.to(server.server).emit('open', msg);
+  });
 
-  socket.on('userSend', (msg) => {
-    console.log('유저가 보낸 메세지:', msg.msg);
-    console.log('유저아이디:', msg.id);
-    io.emit('sendMsg', msg);
+  socket.on('getOut', (data) => {
+    console.log(data);
+    const msg = data.id + '님이 퇴장하였습니다!'
+    socket.leave(data.server);
+    io.to(data.server).emit('close', msg);
+  });
+
+  socket.on('userSend', (data) => {
+    console.log('유저가 보낸 메세지:', data.msg);
+    console.log('유저아이디:', data.id);
+    // socket.join(data.room);
+    if (data.room) {
+      io.to(data.room).emit('sendMsg', data);
+    } else {
+      // 전체메세지로 감
+      io.emit('sendMsg', false);
+    }
   });
 });
 

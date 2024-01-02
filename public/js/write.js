@@ -1,34 +1,40 @@
-// 글 등록 시
-document.querySelector('#write-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const title = e.target.title.value;
-  const content = e.target.content.value;
-  const price = e.target.price.value
-  const category = e.target.category.value
-  const date = e.target.date.value
-  // if (!title) {
-  //   return alert('제목을 입력하세요');
-  // }
+document.getElementById('write-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+
+  const title = document.getElementById('title').value;
+  const content = document.getElementById('content').value;
+  const price = document.getElementById('price').value;
+  const category = document.getElementById('category').value;
+  const date = document.getElementById('date').value;
+  const imagesInput = document.getElementById('images');
+  const images = imagesInput.files;
+
   try {
-    const formData = new FormData(); // multipart/form-data 타입으로 보냄
+    const formData = new FormData();
     formData.append('title', title);
     formData.append('content', content);
     formData.append('price', price);
     formData.append('category', category);
     formData.append('date', date);
-    formData.append('img', e.target.img.files[0]);
 
-    // const result = await axios.post('/post/write', { title, content });
-    const result = await axios.post('/vintage/insert', formData);
-    console.log(result.data);
-
-    if (!result.data.flag) {
-      return alert(result.data.message);
+    // 여러 이미지를 formData에 추가
+    for (let i = 0; i < images.length; i++) {
+      formData.append('images', images[i]);
     }
-    location.href = '/vintage/insert';
-  } catch (err) {
-    console.error(err);
+
+    const response = await axios.post('/vintage/insert', formData);
+    console.log(response.data);
+
+    if (!response.data.flag) {
+      return alert(response.data.message);
+    }
+
+    // 등록이 성공했을 때의 처리 (예: 페이지 이동)
+    location.href = '/vintage'; // 등록 후 이동할 페이지 경로
+
+  } catch (error) {
+    console.error('Error:', error);
+    // 에러가 발생했을 때의 처리
+    alert('등록 중 오류가 발생했습니다.');
   }
-  e.target.title.value = '';
-  e.target.content.value = '';
 });
