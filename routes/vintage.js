@@ -44,10 +44,6 @@ const upload = multer({
 
 
 
-
-
-
-
 // 중고커뮤
 router.get('/', async (req, res) => {
   try {
