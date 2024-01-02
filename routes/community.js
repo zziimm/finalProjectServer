@@ -333,7 +333,7 @@ router.post('/daily/dislike', async (req, res) => {
   }
 });
 
-// 테스트 ----
+// 테스트 더미---- 
 router.get('/test', async (req, res) => {
   const post = await db.collection('community').findOne({ title: '123' });
   res.render('write.ejs', { post });
@@ -381,6 +381,7 @@ router.get('/talk', async (req, res) => {
   }
 });
 
+// 육아톡톡 상세페이지
 router.get('/talk/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
@@ -539,6 +540,7 @@ router.post('/talk/dislike', async (req, res) => {
 
 
 
+// 중고인데 vintage 에 작성이 되어있어서 안쓸예정인 라우터
 router.get('/exchange', async (req, res) => {
   try {
     const exchangePost = await db.collection('exchange').find({}).toArray();
@@ -552,6 +554,7 @@ router.get('/exchange', async (req, res) => {
   }
 });
 
+// 중고 인데 vintage 에 작성이 되어있어서 안쓸예정인 라우터
 router.get('/exchange/detail/:postId', async (req, res) => {
   const exchangePostId = req.params.postId
   const postData = await db.collection('exchange').findOne({ _id: new ObjectId(exchangePostId) });
@@ -566,7 +569,7 @@ router.get('/exchange/detail/:postId', async (req, res) => {
   });
 });
 
-// 커뮤니티 삽입_중고아이템
+// 커뮤니티 삽입_중고아이템 (관리자)
 router.post('/exchange/insert', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
@@ -590,7 +593,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
 });
 
 
-// 쇼핑몰아이템 삽입
+// 쇼핑몰아이템 삽입 (관리자)
 router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
@@ -616,7 +619,8 @@ router.post('/insertShopItem', upload.single('img'), async (req, res) => {
     console.error(err);
   }
 });
-// 수정 (이미지)
+
+// 쇼핑몰아이템 수정 (이미지)
 router.post('/daily/editShopItem/:itemId', upload.single('img'), async (req, res) => {
   const thisItem = await db.collection('shop').findOne({ _id: req.params.itemId });
   console.log(req.file);
@@ -654,6 +658,11 @@ router.post('/daily/editShopItem/:itemId', upload.single('img'), async (req, res
 });
 
 
+
+// 채팅 테스트
+router.get('/testChat', async (req, res) => {
+  res.render('chat.ejs');
+});
 
 
 
