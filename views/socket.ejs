@@ -7,6 +7,7 @@
 </head>
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js" integrity="sha512-zoJXRvW2gC8Z0Xo3lBbao5+AS3g6YWr5ztKqaicua11xHo+AvE1b0lT9ODgrHTmNUxeCw0Ry4BGRYZfXu70weg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
   <P>하이</P>
   <ul id="messages"></ul>
   <form id="chat-form">
@@ -16,14 +17,28 @@
     <button>Send</button>
   </form>
   
-  <button id="send">서버로 데이터 보내기</button>
 
   <button id="in">하하 서버로 입장하기</button>
   <button id="out">하하 서버에서 나가기</button>
+  <hr>
+  <button id="didi">디디랑 채팅하기</button>
 
 
   <script>
     var socket = io();
+
+    document.getElementById('didi').addEventListener('click', async () => {
+      // 누르면 해당 유저정보 + 지금 내 정보 를 채팅데이터로 넘김
+      // 서버는 해당 채팅방의 컬렉션 만듦
+      const userId = 'didi'
+      const me = 'jim'
+      const data = {userId, me}
+      socket.emit('didis',data);
+      location.href = '/community/testChat'
+    })
+
+
+
     
     document.getElementById('in').addEventListener('click', (e) => {
       document.getElementById('exRoom').value = '하하'
@@ -81,6 +96,9 @@
       socket.emit('userSend', data)
       input.value = '';
     })
+
+
+
   </script>
 </body>
 </html>

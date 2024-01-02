@@ -32,6 +32,8 @@ const upload = multer({
   limits: { fieldSize: 5 * 1024 * 1024 }
 });
 
+
+// 상품정보 불러오기 (전체)(초기 8개, 더보기 시 8개 추가)
 router.get('/', async (req, res) => {
   let posts;
   if (req.query.nextId) {
@@ -49,6 +51,7 @@ router.get('/', async (req, res) => {
 
 // 상품정보 불러오기(초기 8개, 더보기 시 8개 추가)
 // 상품 태그별로 보여주기 feed
+// 현재 feed 뿐 만들어진 더미 없음 (이미지 없는 이슈..)
 router.get('/feed', async (req, res) => {
   let posts;
   if (req.query.nextId) {
@@ -57,15 +60,15 @@ router.get('/feed', async (req, res) => {
     posts = await db.collection('shop').find({ tag: 'feed' }).limit(8).toArray();
   }
   console.log(posts);
-  res.render('write.ejs', { posts })
-  // res.json({
-  //   flag: true,
-  //   message: '성공적으로 상품을 가져왔습니다.(feed)',
-  //   posts
-  // });
+  // res.render('write.ejs', { posts })
+  res.json({
+    flag: true,
+    message: '성공적으로 상품을 가져왔습니다.(feed)',
+    posts
+  });
 });
 
-// 장바구니 추가
+// 장바구니 추가(로그인 한 사람)
 router.post('/plusCart', async (req, res) => {
   const title = req.body.title;
   const price = req.body.price;
@@ -100,6 +103,8 @@ router.post('/plusCount', async (req, res) => {
     console.error(err);
   }
 });
+
+// 수량 1개씩 다운 버튼
 router.post('/minusCount', async (req, res) => {
   const postId = req.body.postId;
   const user = req.user._id;
@@ -164,7 +169,6 @@ router.get('/review/:postId', async (req, res) => {
 router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
   try {
     const postId = req.params.postId;
-    console.log(postId);
     const brand = req.body.brand;
     const title = req.body.title;
     const content = req.body.content;
@@ -246,6 +250,8 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
 
 
 
+
+// 아래부터 진행님 작성 라우터 (테스트 중이셔서 실사용에는 아직 어려울 것 같음)
 
 router.get('/q', (req, res) => {
   try {

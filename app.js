@@ -8,6 +8,7 @@ const cors = require('cors');
 const passport = require('passport');
 const api = require('./swagger/swagger')
 
+
 const app = express();  
 
 // socket.io
@@ -23,7 +24,8 @@ dotenv.config();
 
 // 라우터 넣을 곳
 const shopRouter = require('./routes/shop')
-const { connect } = require('./database/index');
+const { connect, client } = require('./database/index');
+const db = client.db('lastTeamProject');
 const passportConfig = require('./passport');
 
 
@@ -123,6 +125,17 @@ io.on('connection', (socket) => {
       io.emit('sendMsg', false);
     }
   });
+
+  socket.on('didis', async (data) => {
+    console.log(data);
+    await db.collection('chat').insertOne({ room: [data.userId, data.me] });
+    const resulte = await db.collection('chat').findOne({ room: [data.userId, data.me] });
+    console.log(resulte);
+    const roomId = resulte._id;
+    socket.join(roomId);
+    const msg = '채팅이 시작되었습니다!'
+    io.to(roomId).emit('start', msg)
+  })
 });
 
 
