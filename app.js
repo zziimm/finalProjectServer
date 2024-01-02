@@ -94,7 +94,8 @@ app.get('/socket', (req, res) => {
 // socket
 io.on('connection', (socket) => {
   // 생각해보기 대화내용 db저장
-  // 
+  // 채팅방 입장 시 chat 컬렉션에 title: 입장한 유저(2명)의 닉네임 데이터 생성
+  // 채팅할 때마다 
   console.log('유저접속됨');
   
   socket.on('getIn', (server) => {
