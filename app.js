@@ -21,7 +21,7 @@ dotenv.config();
 
 
 // 라우터 넣을 곳
-const shopRouter = require('./routers/shop')
+const shopRouter = require('./routes/shop')
 const { connect } = require('./database/index');
 const passportConfig = require('./passport');
 
