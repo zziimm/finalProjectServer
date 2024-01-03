@@ -36,8 +36,10 @@ const upload = multer({
 // 상품정보 불러오기 (전체)(초기 8개, 더보기 시 8개 추가)
 router.get('/', async (req, res) => {
   let posts;
+  let end;
   if (req.query.nextId) {
     posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) } }).limit(8).toArray();
+    if (posts.length < 8) end = true;
   } else {
     posts = await db.collection('shop').find({}).limit(8).toArray();
   }
@@ -45,7 +47,8 @@ router.get('/', async (req, res) => {
   res.json({
     flag: true,
     message: '성공적으로 상품을 가져왔습니다.',
-    posts
+    posts,
+    end
   });
 });
 
@@ -237,9 +240,37 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
   }
 });
 
+// 구매 완료된 목록 주기
+router.post('/purchase', async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const list = await db.collection('purchase').find({ userId: new ObjectId(userId) }).toArray();
+    res.json({
+      flag: true,
+      message: '구매 목록 불러오기 성공',
+      list
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
-
-
+// 구매 목록에 추가
+router.post('/purchase/add', async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const postId = req.body.postId;
+    const count = req.body.count;
+    const date = req.body.date;
+    await db.collection('purchase').insertOne({ userId, postId, count, date });
+    res.json({
+      flag: true,
+      message: '구매 목록 추가 성공',
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 
 
