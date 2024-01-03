@@ -46,6 +46,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(cors({
   // origin: 'https://minton1000.netlify.app',
+  origin: 'http://localhost:3000',
   credentials: true
 }));
 app.use(morgan('dev'));

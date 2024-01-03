@@ -73,7 +73,7 @@ router.post('/plusCart', async (req, res) => {
   const title = req.body.title;
   const price = req.body.price;
   const postId = req.body.postId;
-  const count = req.body.count;
+  const count = req.body.productCount;
   try {
     const user = req.user._id;
     await db.collection('cart').insertOne({ title, price, count, postId: new ObjectId(postId), user });
@@ -169,10 +169,11 @@ router.get('/review/:postId', async (req, res) => {
 router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
   try {
     const postId = req.params.postId;
+    const userId = req.body.userId;
     const brand = req.body.brand;
     const title = req.body.title;
     const content = req.body.content;
-    const date = req.body.date; 
+    const date = req.body.date;
     const imgUrl = req.file?.location || '';
     const imgKey = req.file?.key || '';
     await db.collection('review').insertOne({ brand, title, content, date, postId, imgUrl, imgKey });
