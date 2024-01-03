@@ -14,7 +14,12 @@ const app = express();
 // socket.io
 const http = require('http').createServer(app);
 // const { Server } = require('socket.io');
-const io = require('socket.io')(http);
+const io = require('socket.io')(http, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
 // const io = new Server(http);
 // Swagger
 const { swaggerUi, specs } = require('./swagger/swagger');
@@ -98,6 +103,8 @@ io.on('connection', (socket) => {
   // 생각해보기 대화내용 db저장
   // 채팅방 입장 시 chat 컬렉션에 title: 입장한 유저(2명)의 닉네임 데이터 생성
   // 채팅할 때마다 
+
+  // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
   
   socket.on('getIn', (server) => {
@@ -126,15 +133,23 @@ io.on('connection', (socket) => {
     }
   });
 
+
+  socket.on('didichat', (data) => {
+    console.log('didichat' + data);
+    socket.join(data.roomId);
+    io.to(data.roomId).emit('didimsg', data.msg);
+  });
+
   socket.on('didis', async (data) => {
     console.log(data);
-    await db.collection('chat').insertOne({ room: [data.userId, data.me] });
-    const resulte = await db.collection('chat').findOne({ room: [data.userId, data.me] });
+    await db.collection('chat').insertOne({ user1: data.userId, user2: data.me });
+    const resulte = await db.collection('chat').findOne({ user1: data.userId, user2: data.me });
     console.log(resulte);
     const roomId = resulte._id;
     socket.join(roomId);
     const msg = '채팅이 시작되었습니다!'
-    io.to(roomId).emit('start', msg)
+    const resulteData = { roomId, msg }
+    io.to(roomId).emit('start', resulteData)
   })
 });
 

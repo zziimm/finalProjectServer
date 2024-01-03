@@ -37,7 +37,15 @@
       location.href = '/community/testChat'
     })
 
-
+    socket.on('start', (data) => {
+      console.log(data);
+      const input = document.getElementById('roomId');
+      input.value = data.roomId;
+      const message = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = data.msg;
+      message.appendChild(li);
+    });
 
     
     document.getElementById('in').addEventListener('click', (e) => {

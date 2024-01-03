@@ -10,6 +10,7 @@
   <h1>디디</h1>
   <ul id="messages"></ul>
   <form id="chat-form">
+    <input type="text" id="roomId" autocomplete="off" />id
     <input type="text" id="message-input" autocomplete="off" />
     <button>Send</button>
   </form>
@@ -19,17 +20,25 @@
 
     document.getElementById('chat-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const room = document.getElementById('exRoom').value;
-      const id = document.getElementById('exId').value;
+      const roomId = document.getElementById('roomId').value;
       const input = document.getElementById('message-input');
       const msg = input.value;
-      const data = { room, id, msg }
-      socket.emit('userSend', data)
+      const data = { roomId, msg }
+      socket.emit('didichat', data)
       input.value = '';
     });
-
-    socket.on('start', (msg) => {
-      console.log(msg);
+    
+    socket.on('start', (data) => {
+      console.log(data);
+      const input = document.getElementById('roomId');
+      input.value = data.roomId;
+      const message = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = data.msg;
+      message.appendChild(li);
+    });
+    
+    socket.on('didimsg', (msg) => {
       const message = document.getElementById('messages');
       const li = document.createElement('li');
       li.textContent = msg;
