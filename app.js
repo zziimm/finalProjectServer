@@ -107,11 +107,13 @@ io.on('connection', (socket) => {
   // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
   
-  socket.on('getIn', (server) => {
+  socket.on('getIn', async (server) => {
     console.log(server);
+    const chatData = await db.collection('chat').find({ user1: server.server, user2: server.id });
     const msg = server.id + '님이 입장하였습니다!'
     socket.join(server.server);
-    io.to(server.server).emit('open', msg);
+    const resulte = { chatData, msg }
+    io.to(server.server).emit('open', resulte);
   });
 
   socket.on('getOut', (data) => {
@@ -121,10 +123,21 @@ io.on('connection', (socket) => {
     io.to(data.server).emit('close', msg);
   });
 
-  socket.on('userSend', (data) => {
+  socket.on('userSend', async (data) => {
     console.log('유저가 보낸 메세지:', data.msg);
     console.log('유저아이디:', data.id);
-    // socket.join(data.room);
+
+    const findChat = await db.collection('chat').find({ user1: data.room, user2: data.id });
+    if (!findChat) {
+      await db.collection('chat').insertOne({ user1: data.room, user2: data.id });
+      
+    }
+    const findUser = await db.collection('chat').find({ user1: data.room, user2: data.id });
+    if (findUser.user1 === data.room) {
+      await db.collection('chat').updateOne({ user1: data.room, user2: data.id }, { $push: { user1Chat: data.msg } });
+    } else if (findUser.user2 === data.room) {
+      
+    }
     if (data.room) {
       io.to(data.room).emit('sendMsg', data);
     } else {
@@ -133,24 +146,20 @@ io.on('connection', (socket) => {
     }
   });
 
-
-  socket.on('didichat', (data) => {
-    console.log('didichat' + data);
-    socket.join(data.roomId);
-    io.to(data.roomId).emit('didimsg', data.msg);
-  });
-
+  // didi
   socket.on('didis', async (data) => {
-    console.log(data);
     await db.collection('chat').insertOne({ user1: data.userId, user2: data.me });
     const resulte = await db.collection('chat').findOne({ user1: data.userId, user2: data.me });
-    console.log(resulte);
     const roomId = resulte._id;
+    const chatRequester = resulte.user2;
+    const msg = data.msg;
+
     socket.join(roomId);
-    const msg = '채팅이 시작되었습니다!'
-    const resulteData = { roomId, msg }
-    io.to(roomId).emit('start', resulteData)
-  })
+    const res = { chatRequester, msg }
+    io.to(roomId).emit('res', res);
+  });
+
+
 });
 
 

@@ -83,8 +83,8 @@ router.post('/insert', upload.array('img'), async (req, res) => {
   // const user = req.user.userId
   // console.log(user);
   // const dog = req.user.dogSpecies
-  const imgUrl = req.files?.location || ''
-  const imgKey = req.files?.key || ''
+  const imgUrl = req.files.map(url => url.location) || '';
+  const imgKey = req.files.map(url => url.key) || '';
 
   
   try {
