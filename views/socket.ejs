@@ -17,27 +17,43 @@
     <button>Send</button>
   </form>
   
-
+  
   <button id="in">하하 서버로 입장하기</button>
   <button id="out">하하 서버에서 나가기</button>
   <hr>
   <button id="didi">디디랑 채팅하기</button>
-
+  <form id="chat-form">
+    <input id="didiId" type="text" placeholder="익명의 아이디">
+    <input type="text" id="didiMsg" autocomplete="off" />
+    <!-- <button>Send</button> -->
+  </form>
+  
+  <hr>
+  <ul id="messageBox"></ul>
 
   <script>
     var socket = io();
-
+    
     document.getElementById('didi').addEventListener('click', async () => {
       // 누르면 해당 유저정보 + 지금 내 정보 를 채팅데이터로 넘김
       // 서버는 해당 채팅방의 컬렉션 만듦
+      const msg = document.getElementById('didiMsg').value;
       const userId = 'didi'
       const me = 'jim'
-      const data = {userId, me}
+      const data = {userId, me, msg}
       socket.emit('didis',data);
       location.href = '/community/testChat'
     })
 
-
+    socket.on('start', (data) => {
+      console.log(data);
+      const input = document.getElementById('roomId');
+      input.value = data.roomId;
+      const message = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = data.msg;
+      message.appendChild(li);
+    });
 
     
     document.getElementById('in').addEventListener('click', (e) => {
@@ -66,11 +82,11 @@
       li.textContent = msg;
       message.appendChild(li);
     })
-    socket.on('open', (msg) => {
-      console.log(msg);
+    socket.on('open', (resulte) => {
+      console.log(resulte);
       const message = document.getElementById('messages');
       const li = document.createElement('li');
-      li.textContent = msg;
+      li.textContent = resulte.msg;
       message.appendChild(li);
     })
 

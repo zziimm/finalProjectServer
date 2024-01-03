@@ -8,33 +8,48 @@
 <body>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js" integrity="sha512-zoJXRvW2gC8Z0Xo3lBbao5+AS3g6YWr5ztKqaicua11xHo+AvE1b0lT9ODgrHTmNUxeCw0Ry4BGRYZfXu70weg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <h1>디디</h1>
+
+  <hr>
+  <ul id="messageBox"></ul>
+  
+  <hr>
   <ul id="messages"></ul>
   <form id="chat-form">
+    <input type="text" id="roomId" autocomplete="off" />id
     <input type="text" id="message-input" autocomplete="off" />
     <button>Send</button>
   </form>
 
   <script>
     var socket = io();
+    socket.on('res', (res) => {
+      const messageContain = document.getElementById('messageBox');
+      const messages = document.getElementById('messages');
+
+      const li = document.createElement('li');
+      li.textContent = res.msg, res.chatRequester;
+      messageContain.appendChild(li);
+
+
+      const msgLi = document.createElement('li');
+      msgLi.textContent = res.msg;
+      messages.appendChild(li);
+
+      
+    });
+
+
 
     document.getElementById('chat-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const room = document.getElementById('exRoom').value;
-      const id = document.getElementById('exId').value;
-      const input = document.getElementById('message-input');
-      const msg = input.value;
-      const data = { room, id, msg }
-      socket.emit('userSend', data)
-      input.value = '';
+
+      const msg = document.getElementById('message-input').value;
+      const userId = 'didi'
+      const me = 'jim'
+      const data = {userId, me, msg}
+      socket.emit('didis',data);
     });
 
-    socket.on('start', (msg) => {
-      console.log(msg);
-      const message = document.getElementById('messages');
-      const li = document.createElement('li');
-      li.textContent = msg;
-      message.appendChild(li);
-    });
 
 
   </script>
