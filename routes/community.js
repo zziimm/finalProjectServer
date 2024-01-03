@@ -594,7 +594,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
 
 
 // 쇼핑몰아이템 삽입 (관리자)
-router.post('/insertShopItem', upload.single('img'), async (req, res) => {
+router.post('/insertShopItem', upload.array('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const brand = req.body.brand;
@@ -603,11 +603,16 @@ router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   const age = req.body.age;
   const size = req.body.size;
   const tag = req.body.tag;
-  const imgUrl = req.file?.location || '';
+  console.log(req.files);
+  const imgUrl = req.files.map(url => url.location) || '';
+  const imgKey = req.files.map(url => url.key) || '';
+  console.log(imgUrl);
+  console.log(imgKey);
+  // const imgUrl = req.file?.location || '';
   // imgUrl 뒤에 키값이 있으니까 
   // 앞의 값은 env 에 저장해서 꺼내쓰고 키값만 imgUrl에 저장해도되고
   // 두개를 따로 나눠서 저장해도되고 선택!
-  const imgKey = req.file?.key || '';
+  // const imgKey = req.file?.key || '';
 
   try {
     await db.collection('shop').insertOne({ brand, title, price, age, size, tag, imgUrl, imgKey });
