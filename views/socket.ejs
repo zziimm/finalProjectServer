@@ -21,30 +21,20 @@
   <button id="in">하하 서버로 입장하기</button>
   <button id="out">하하 서버에서 나가기</button>
   <hr>
-  <button id="didi">디디랑 채팅하기</button>
-  <form id="chat-form">
-    <input id="didiId" type="text" placeholder="익명의 아이디">
-    <input type="text" id="didiMsg" autocomplete="off" />
-    <!-- <button>Send</button> -->
+  <form id="fromHere">
+    <input id="room" type="text" placeholder="전달할 룸">
+    <input id="from" type="text" placeholder="익명의 아이디">
+    <input type="text" id="message" autocomplete="off" />
+    <button>Send</button>
   </form>
-  
+  <button id="login">디디 서버 로그인하기</button>
   <hr>
-  <ul id="messageBox"></ul>
+  <div id="messageBox"></div>
+  <hr>
+  <div id="chattingBox"></div>
 
   <script>
     var socket = io();
-    
-    document.getElementById('didi').addEventListener('click', async () => {
-      // 누르면 해당 유저정보 + 지금 내 정보 를 채팅데이터로 넘김
-      // 서버는 해당 채팅방의 컬렉션 만듦
-      const msg = document.getElementById('didiMsg').value;
-      const userId = 'didi'
-      const me = 'jim'
-      const data = {userId, me, msg}
-      socket.emit('didis',data);
-      location.href = '/community/testChat'
-    })
-
     socket.on('start', (data) => {
       console.log(data);
       const input = document.getElementById('roomId');
@@ -54,7 +44,6 @@
       li.textContent = data.msg;
       message.appendChild(li);
     });
-
     
     document.getElementById('in').addEventListener('click', (e) => {
       document.getElementById('exRoom').value = '하하'
@@ -64,6 +53,13 @@
       
       socket.emit('getIn', data);
     });
+    socket.on('open', (resulte) => {
+      console.log(resulte);
+      const message = document.getElementById('messages');
+      const li = document.createElement('li');
+      li.textContent = resulte.msg;
+      message.appendChild(li);
+    })
     document.getElementById('out').addEventListener('click', (e) => {
       document.getElementById('exRoom').value = ''
       const id = document.getElementById('exId').value;
@@ -72,21 +68,11 @@
 
       socket.emit('getOut', data);
     });
-    
-    
-    
     socket.on('close', (msg) => {
       console.log(msg);
       const message = document.getElementById('messages');
       const li = document.createElement('li');
       li.textContent = msg;
-      message.appendChild(li);
-    })
-    socket.on('open', (resulte) => {
-      console.log(resulte);
-      const message = document.getElementById('messages');
-      const li = document.createElement('li');
-      li.textContent = resulte.msg;
       message.appendChild(li);
     })
 
@@ -101,7 +87,6 @@
       message.appendChild(li);
     })
     
-    
     document.getElementById('chat-form').addEventListener('submit', (e) => {
       e.preventDefault();
       const room = document.getElementById('exRoom').value;
@@ -114,6 +99,64 @@
     })
 
 
+    document.getElementById('fromHere').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const room = document.getElementById('room').value;
+      const id = document.getElementById('from').value;
+      const msg = document.getElementById('message').value;
+      const data = { room, id, msg }
+      socket.emit('fromHere', data)
+      message = '';
+    })
+
+    socket.on('messageBox', (data) => {
+      console.log(data);
+      const box = document.getElementById('messageBox');
+      
+      if (!document.getElementById(data.from)) {
+        const boxItem = document.createElement('div');
+        boxItem.textContent = (data.lastChat + data.from);
+        boxItem.id = data.from;
+        box.appendChild(boxItem);
+        const btn = document.createElement('button');
+        const type = document.createAttribute('onclick');
+        btn.id = `${data.from}_btn`;
+        type.value = `toChatroom(${data.from})`;
+        btn.setAttributeNode(type);
+        btn.textContent = '채팅방';
+        box.appendChild(btn);
+        
+        
+      } else {
+        const updateinner = document.getElementById(data.from);
+        updateinner.textContent = (data.lastChat + data.from);
+      }
+    });
+    
+    const toChatroom = async (from) => {
+      console.log(from);
+      const chatting = await axios.get(`/getChatting`);
+      console.log(chatting.data.resulte[0]);
+      // const list = chatting.data.resulte[0].chatList?.map(chat => boxItem.textContent = (chat.user+chat.msg));
+      // box.appendChild(boxItem)
+      // chatting.data.resulte[0].chatList?.forEach(item => {
+        //   boxItem.textContent = (item.user+item.msg);
+        //   box.appendChild(boxItem)
+        // })
+      let box = document.getElementById('chattingBox');
+      let boxItem = document.createElement('p');
+      for (let i = 0; i<chatting.data.resulte[0].chatList.length; i++) {
+        let user = chatting.data.resulte[0].chatList[i].user;
+        let msg = chatting.data.resulte[0].chatList[i].msg;
+        boxItem.textContent = (user+msg);
+        box.appendChild(boxItem)
+      }
+    }
+    
+    document.getElementById('login').addEventListener('click', () => {
+      const server = '디디'
+      socket.emit('login', server);
+    });
 
   </script>
 </body>

@@ -177,7 +177,7 @@ router.get('/daily', async (req, res) => {
  */
 
 router.get('/daily/detail/:postId', async (req, res) => {
-  const postId = req.params.postId
+  const postId = req.params.postId;
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
   // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
   const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
@@ -194,10 +194,10 @@ router.get('/daily/detail/:postId', async (req, res) => {
 
 // 커뮤니티 삽입_데일리톡(일상)
 router.post('/daily/insert', upload.single('img'), async (req, res) => {
-  // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
+  // const userId = req.user._id;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -220,6 +220,7 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   console.log(req.file);
   const title = req.body.title;
   const content = req.body.content;
+  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -277,6 +278,7 @@ router.post('/daily/comment/:postId', async (req, res) => {
   const user = req.user._id;
   const userId = req.user.userId;
   const comment = req.body.comment;
+  // const date = new Date();
   const date = req.body.date;
   try {
     await db.collection('comment').insertOne({
@@ -338,7 +340,7 @@ router.get('/test', async (req, res) => {
   const post = await db.collection('community').findOne({ title: '123' });
   res.render('write.ejs', { post });
 });
-// 좋아요 버튼이 토글이 아닐 때
+// 좋아요 버튼이 토글이 아닐 때(좋아요를 하게되면 옆에 취소 버튼이 생길 시)
 router.post('/test/like', async (req, res) => {
   const id = '더미'
   const thisPost = await db.collection('community').findOne({ title: '123' });
@@ -398,10 +400,10 @@ router.get('/talk/detail/:postId', async (req, res) => {
 
 // 커뮤니티 삽입_육아톡톡
 router.post('/talk/insert', upload.single('img'), async (req, res) => {
-  // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
+  // const userId = req.user._id;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -424,6 +426,7 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
   console.log(req.file);
   const title = req.body.title;
   const content = req.body.content;
+  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -576,6 +579,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
   const title = req.body.title;
   const content = req.body.content;
   const price = req.body.price;
+  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
