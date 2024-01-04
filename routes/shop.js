@@ -157,7 +157,7 @@ router.get('/detail/:postId', async (req, res) => {
 router.get('/review/:postId', async (req, res) => {
   try {
     const postId = req.params.postId;
-    const itemReview = await db.collection('review').find({ postId: new ObjectId(postId) }).toArray();
+    const itemReview = await db.collection('review').find({ postId: postId }).toArray();
     res.json({
       flag: true,
       message: '리뷰 불러오기 성공',
@@ -172,14 +172,18 @@ router.get('/review/:postId', async (req, res) => {
 router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
   try {
     const postId = req.params.postId;
-    const userId = req.body.userId;
-    const brand = req.body.brand;
     const title = req.body.title;
     const content = req.body.content;
     const date = req.body.date;
     const imgUrl = req.file?.location || '';
+    const star = req.body.star;
     const imgKey = req.file?.key || '';
-    await db.collection('review').insertOne({ brand, title, content, date, postId, imgUrl, imgKey });
+    try {
+      await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey });
+      
+    } catch (error) {
+      console.error(error);
+    }
     res.json({
       flag: true,
       message: '리뷰 등록 완료'
@@ -191,6 +195,18 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
       message: '리뷰 등록 실패'
     });
   };
+});
+
+// 리뷰 전체 삭제
+router.get('/reviewDeleteAll', async (req, res) => {
+  try {
+    await db.collection('review').deleteMany({});
+  } catch (err) {
+    console.error(err);
+  }
+  res.json({
+    flag: true
+  })
 });
 
 // 상품 상세페이지_Q&A 가져오기
