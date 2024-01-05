@@ -202,10 +202,18 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
 
 // 본인의 리뷰 삭제
 router.post('/reviewDelete', async (req, res) => {
+  const { _id, postId } = req.body;
   try {
     await db.collection('review').deleteOne({
-      _id: new ObjectId(req.body._id)
+      _id: new ObjectId(_id)
     })
+    const reviweList = await db.collection('review').find({ postId: postId }).toArray();
+    let sum = 0;
+    reviweList.map((item) => {sum = Number(item.star) + sum})
+    const length = reviweList.length;
+    const rate = (sum/length).toFixed(1);
+    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
+
     res.json({
       flag: true,
       message: '리뷰 삭제 완료'
