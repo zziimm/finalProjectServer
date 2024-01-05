@@ -176,43 +176,57 @@ router.get('/daily', async (req, res) => {
  *                        ]
  */
 
-router.get('/daily/detail/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-  // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
-  const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
-  res.json({
-    flag: true,
-    message: '데이터 불러오기 성공(상세보기)',
-    postData,
-    commentData
-    // userData,
-  });
-});
+// router.get('/daily/detail/:postId', async (req, res) => {
+//   const postId = req.params.postId
+//   const postData = await db.collection('community').findOne({ id: postId });
+//   // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
+//   const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
+//   res.json({
+//     flag: true,
+//     message: '데이터 불러오기 성공(상세보기)',
+//     postData,
+//     commentData
+//     // userData,
+//   });
+// });
 
 
 
 // 커뮤니티 삽입_데일리톡(일상)
-router.post('/daily/insert', upload.single('img'), async (req, res) => {
+router.post('/daily/insert', async (req, res) => {
+  // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
+  const id = req.body.id;
   const title = req.body.title;
   const content = req.body.content;
-  // const userId = req.user._id;
   const author = req.body.author;
-  const imgUrl = req.file?.location || '';
-  const imgKey = req.file?.key || '';
-
+  const imgUrl = req.body.imgUrl || '';
+  const imgKey = req.body.imgKey || '';
+  
   try {
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, type: 'daily'});
+    await db.collection('community').insertOne({ id, title, content, imgUrl, imgKey, author, type: 'daily'});
     res.json({
       flag: true,
-      message: '데이터 저장 성공(커뮤니티_자랑)'
+      message: '데이터 저장 성공(커뮤니티_자랑)',
     });
   } catch (err) {
     console.error(err);
   }
 });
+
+router.post('/daily/insert/image', upload.single('img'), async (req, res) => {
+  const imgUrl = req.file?.location || '';
+  const imgKey = req.file?.key || '';
+
+  res.json({
+    flag: true,
+    message: '이미지 삽입 성공',
+    fileName: imgUrl,
+    fileKey: imgKey,
+  });
+});
+
 
 // 수정 (이미지)_데일리톡(일상)
 router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
@@ -220,7 +234,6 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   console.log(req.file);
   const title = req.body.title;
   const content = req.body.content;
-  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -272,18 +285,28 @@ router.delete('/daily/delete/:postId', async (req, res) => {
   }
 });
 
+// (추가) 해당글에 대한 댓글 불러오기
+router.get('/daily/comment', async (req, res) => {
+  try {
+    const commentList = await db.collection('comment').find({ postId: new ObjectId(req.query.postId) }).toArray();
+    res.json(commentList)  
+  } catch (err) {
+    console.error(err);
+  }
+
+})
+
 // 댓글달기_데일리톡(일상)
-router.post('/daily/comment/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  const user = req.user._id;
-  const userId = req.user.userId;
-  const comment = req.body.comment;
-  // const date = new Date();
+router.post('/daily/comment/insert', async (req, res) => {
+  const postId = req.body.postId;
+  // const user = req.user._id;
+  // const userId = req.user.userId;
+  const comment = req.body.newComment;
   const date = req.body.date;
   try {
     await db.collection('comment').insertOne({
-      user,
-      userId,
+      // user,
+      // userId,
       comment,
       date,
       postId: new ObjectId(postId),
@@ -340,7 +363,7 @@ router.get('/test', async (req, res) => {
   const post = await db.collection('community').findOne({ title: '123' });
   res.render('write.ejs', { post });
 });
-// 좋아요 버튼이 토글이 아닐 때(좋아요를 하게되면 옆에 취소 버튼이 생길 시)
+// 좋아요 버튼이 토글이 아닐 때
 router.post('/test/like', async (req, res) => {
   const id = '더미'
   const thisPost = await db.collection('community').findOne({ title: '123' });
@@ -400,10 +423,10 @@ router.get('/talk/detail/:postId', async (req, res) => {
 
 // 커뮤니티 삽입_육아톡톡
 router.post('/talk/insert', upload.single('img'), async (req, res) => {
+  // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
-  // const userId = req.user._id;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -426,7 +449,6 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
   console.log(req.file);
   const title = req.body.title;
   const content = req.body.content;
-  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
@@ -579,7 +601,6 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
   const title = req.body.title;
   const content = req.body.content;
   const price = req.body.price;
-  // const userId = req.user.userId;
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';

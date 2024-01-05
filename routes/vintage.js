@@ -49,11 +49,13 @@ router.get('/', async (req, res) => {
   const postsPerPage = 5; // 페이지 당 콘텐츠 개수
   const currentPage = req.query.page || 1; // 현재 페이지
   
-  const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
+  // const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
+  const posts = await db.collection('vincommunity').find({}).toArray();
   // console.log(posts);
   const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
   const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
-  res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
+  // res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
+  res.json(posts);
 });
 
 router.get('/detail/:postId', async (req, res) => {
@@ -79,7 +81,7 @@ router.get('/insert', (req, res) => {
 
 // 커뮤니티 삽입_중고
 router.post('/insert', upload.array('img'), async (req, res) => {
-  const { title, content, price, category } = req.body;
+  const { id, title, content, price, category } = req.body;
   // const user = req.user.userId
   // console.log(user);
   // const dog = req.user.dogSpecies
@@ -89,7 +91,7 @@ router.post('/insert', upload.array('img'), async (req, res) => {
   
   try {
     const data = await db.collection('vincommunity').insertOne({
-    title, content, price, category, imgUrl, imgKey, user:req.user
+    title, content, price, category, imgUrl, imgKey, user:req.user, id
     })
     res.json({
       flag: true,
