@@ -27,10 +27,10 @@ router.get('/register', (req, res) => {
 const s3 = new S3Client({
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY,
-    secretAccessKey: process.env.AWS_SECRET_KEY
+    secretAccessKey: process.env.AWS_ACCESS_KEY_SECRET
   },
   region: 'ap-northeast-2'
-}); 
+});
 
 const upload = multer({
   storage: multerS3({
@@ -98,17 +98,18 @@ const upload = multer({
 
 
 router.post('/register', async (req, res) => {
-  const { userId, passwd, email, dog, dogSpecies, dogAge, dogName } = req.body
-  
+  console.log(req.body);
+  const { userId, passwd, signEmail, signUserNicname, signDogType, signDogAge, signDogName } = req.body
+
   // 정규표현식
   const userIdRegex = /^[a-zA-Z0-9]{4,10}$/;
-  
+
   try {
     if (userId === '') {
       throw new Error('ID를 입력해주세요!');
     }
 
-    if (email === '') {
+    if (signEmail === '') {
       throw new Error('이메일을 입력해주세요!')
     }
 
@@ -120,14 +121,14 @@ router.post('/register', async (req, res) => {
     if (!userIdRegex.test(userId)) {
       throw new Error('ID는 4자 이상 10자 이하 알파벳 대소문자, 숫자로만 구성되어야 합니다.');
     }
-        
+
     const existUser = await db.collection('userInfo').findOne({ userId })
     if (existUser) {
       throw new Error('존재하는 ID 입니다')
     }
 
-    const existNick = await db.collection('userInfo').findOne({ email })
-    if (existNick) {
+    const existEmail = await db.collection('userInfo').findOne({ signEmail })
+    if (existEmail) {
       throw new Error('존재하는 이메일 입니다')
     }
 
@@ -136,11 +137,20 @@ router.post('/register', async (req, res) => {
     await db.collection('userInfo').insertOne({
       userId,
       passwd: hash,
-      email,
-      dog,
-      dogSpecies,
-      dogAge,
-      dogName,
+      signEmail,
+      signUserNicname,
+      signDogType,
+      signDogAge,
+      signDogName,
+
+
+      // userId,
+      // passwd: hash,
+      // email,
+      // dog,
+      // dogSpecies,
+      // dogAge,
+      // dogName,
       imgUrl: req.file?.location || '',
 
     })
@@ -164,17 +174,18 @@ router.post('/register', async (req, res) => {
 // 로그인
 router.get('/login', async (req, res) => {
   const result = await db.collection('userInfo').find({}).toArray();
-  res.render('login');
-  // res.json({
-  //   flag: true,
-  //   message: '불러오기 성공',
-  //   data: result
-  // })
+  // res.render('login');
+  res.json({
+    flag: true,
+    message: '불러오기 성공',
+    data: result
+  })
 })
 
 
 
-router.post('/login', (req, res, next) => {
+router.post('/login', async (req, res, next) => {
+
   passport.authenticate('local', (authError, user, info) => {
     if (authError) {
       return res.status(500).json(authError)
@@ -185,18 +196,18 @@ router.post('/login', (req, res, next) => {
 
     req.login(user, (loginError) => {
       if (loginError) return next(loginError)
-        // res.redirect('/')
-      
+      // res.redirect('/')
+
       res.json({
         flag: true,
         message: '로그인 성공',
         user
       })
     })
-  })(req, res, next )
+  })(req, res, next)
 })
 
-router.get('/loginUser', (req, res) => {  
+router.get('/loginUser', (req, res) => {
   res.json({
     flag: true,
     message: '유저정보 불러오기 성공',
@@ -204,8 +215,8 @@ router.get('/loginUser', (req, res) => {
   })
 })
 
-  
-  // 로그아웃
+
+// 로그아웃
 router.get('/logout', (req, res, next) => {
   req.logout((logoutError) => {
     if (logoutError) return next(logoutError)
