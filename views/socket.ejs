@@ -32,6 +32,12 @@
   <div id="messageBox"></div>
   <hr>
   <div id="chattingBox"></div>
+  <hr>
+  <form id="didiBox"></form>
+  <!-- <form id="tellForm">
+    <input id="diditext" type="text" placeholder="디디가 할 말">
+    <button>Send</button>
+  </form> -->
 
   <script>
     var socket = io();
@@ -125,17 +131,42 @@
         btn.setAttributeNode(type);
         btn.textContent = '채팅방';
         box.appendChild(btn);
-        
-        
       } else {
         const updateinner = document.getElementById(data.from);
         updateinner.textContent = (data.lastChat + data.from);
       }
     });
     
+    document.getElementById('login').addEventListener('click', async () => {
+      const server = '디디';
+      const resulte = await axios.get('/getChatHeaderList');
+      socket.emit('login', server);
+      
+      const chatHeader = resulte.data.chatData;
+      console.log(chatHeader);
+
+      const box = document.getElementById('messageBox');
+      for (let i = 0; i < chatHeader.length; i++) {
+        let user = chatHeader[i].user;
+        let msg = chatHeader[i].msg;
+        const boxItem = document.createElement('div');
+        boxItem.textContent = (msg + user);
+        boxItem.id = user;
+        box.appendChild(boxItem);
+
+        const btn = document.createElement('button');
+        const type = document.createAttribute('onclick');
+        btn.id = `${user}_btn`;
+        type.value = `toChatroom(${user})`;
+        btn.setAttributeNode(type);
+        btn.textContent = '채팅방';
+        box.appendChild(btn);
+      }
+    });
+
     const toChatroom = async (from) => {
-      console.log(from);
-      const chatting = await axios.get(`/getChatting`);
+      console.log(from.id);
+      const chatting = await axios.get(`/getChatting?from=${from.id}`);
       console.log(chatting.data.resulte[0]);
       // const list = chatting.data.resulte[0].chatList?.map(chat => boxItem.textContent = (chat.user+chat.msg));
       // box.appendChild(boxItem)
@@ -144,20 +175,59 @@
         //   box.appendChild(boxItem)
         // })
       let box = document.getElementById('chattingBox');
-      let boxItem = document.createElement('p');
+      
       for (let i = 0; i<chatting.data.resulte[0].chatList.length; i++) {
         let user = chatting.data.resulte[0].chatList[i].user;
         let msg = chatting.data.resulte[0].chatList[i].msg;
+        let boxItem = document.createElement('p');
         boxItem.textContent = (user+msg);
-        box.appendChild(boxItem)
+        boxItem.id = user;
+        box.appendChild(boxItem);
+      };
+      
+      if (from.id !== box.firstChild.id) {
+        while (box.firstChild) {
+          box.removeChild(box.firstChild)
+          if (from.id == box.firstChild.id) {
+            return
+          }
+        } 
+      };
+
+      const didiBox = document.getElementById('didiBox');
+      const diditext = document.createElement('input');
+      diditext.type = 'text';
+      diditext.id = 'diditext';
+      
+      const btn = document.createElement('button');
+      const type = document.createAttribute('submit');
+      type.value = `fromDidi()`;
+      
+      btn.textContent = 'send';
+      btn.setAttributeNode(type);
+      
+      didiBox.appendChild(diditext);
+      didiBox.appendChild(btn);
+
+    };
+
+    socket.on('inChatroom', (toInChatroom) => {
+      let box = document.getElementById('chattingBox');
+
+      if (toInChatroom.from == box.lastChild.id) {
+        let boxItem = document.createElement('p');
+        boxItem.textContent = (toInChatroom.from+toInChatroom.msg);
+        boxItem.id = toInChatroom;
+        box.appendChild(boxItem);
       }
-    }
-    
-    document.getElementById('login').addEventListener('click', () => {
-      const server = '디디'
-      socket.emit('login', server);
     });
 
+    const didiChat = document.getElementById('diditext');
+    const fromDidi = () => {
+      console.log(didiChat);
+    };
+
+    
   </script>
 </body>
 </html>

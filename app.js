@@ -169,8 +169,10 @@ io.on('connection', (socket) => {
     const lastChat = chat.chatList.pop().msg
     console.log(lastChat);
     const chatData = { from, lastChat }
+    const toInChatroom = { from, msg: data.msg }
     // socket.join((data.room+data.id));
     io.to(data.room).emit('messageBox', chatData);
+    io.to(data.room).emit('inChatroom', toInChatroom);
   });
   
   socket.on('login', (server) => {
@@ -178,10 +180,31 @@ io.on('connection', (socket) => {
     socket.join(server);
   });
 });
+
+app.get('/getChatHeaderList', async (req, res) => {
+  const resulte = await db.collection('chat').find({ room: '디디' }).toArray();
+  console.log(resulte);
+  const chatData = resulte.map(room => {
+    return (
+      {
+        user: room.user2, 
+        msg: room.chatList.pop().msg
+      }
+    )
+  });
+  // const lastChat = resulte.map(room => room.chatList.pop().msg)
+  console.log(chatData);
+
+  res.json({
+    flag: true,
+    chatData
+  });
+});
+
 app.get('/getChatting', async (req, res) => {
-  // const from = req.query.from;
-  const from = '아아'
-  console.log(from);
+  const from = req.query.from;
+  // const from = '아아'
+  console.log('from'+from);
   const resulte = await db.collection('chat').find({ user2: from }).toArray();
   console.log(resulte);
   res.json({
