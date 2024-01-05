@@ -192,20 +192,22 @@ router.get('/daily', async (req, res) => {
 
 
 
-// 커뮤니티 삽입_데일리톡(일상)
+// dailyDog_Create
 router.post('/daily/insert', async (req, res) => {
-  // const userId = req.user._id;
-  // const inputdata = req.body.inputdata;
-  const id = req.body.id;
-  const title = req.body.title;
-  const content = req.body.content;
-  const author = req.body.author;
+
+  const { id, title, content, author, authorId, date } = req.body
+
+  // const id = req.body.id;
+  // const title = req.body.title;
+  // const content = req.body.content;
+  // const author = req.body.author;
+  // const authorId = req.body.authorId;
+  // const date = req.body.date;
   const imgUrl = req.body.imgUrl || '';
   const imgKey = req.body.imgKey || '';
   
   try {
-    // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ id, title, content, imgUrl, imgKey, author, type: 'daily'});
+    await db.collection('community').insertOne({ id, title, content, imgUrl, imgKey, author, authorId, date, type: 'daily', view: 0, like: { up: 0, down: 0}});
     res.json({
       flag: true,
       message: '데이터 저장 성공(커뮤니티_자랑)',
