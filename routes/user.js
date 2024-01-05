@@ -19,8 +19,19 @@ const { S3Client } = require('@aws-sdk/client-s3');
 
 // 회원가입
 // ejs 추후 삭제
-router.get('/register', (req, res) => {
-  res.render('register');
+router.get('/register', async (req, res) => {
+  // res.render('register');
+  try {
+    const signUserInfoGet = await db.collection('userInfo').findOne({})
+    res.json({
+      flag: true,
+      message: '회원 정보 받음',
+      data: signUserInfoGet
+    })
+  } catch (error) {
+    console.error(error);
+  }
+
 });
 
 // 프로필
