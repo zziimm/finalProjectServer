@@ -175,15 +175,18 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
     const title = req.body.title;
     const content = req.body.content;
     const date = req.body.date;
-    const imgUrl = req.file?.location || '';
+    const imgUrl = req.file?.location || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png';
     const star = req.body.star;
-    const imgKey = req.file?.key || '';
-    try {
-      await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey });
-      
-    } catch (error) {
-      console.error(error);
-    }
+    const imgKey = req.file?.key || 'NoImage';
+    
+    await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey });
+    const reviweList = await db.collection('review').find({ postId: postId }).toArray();
+    let sum = 0;
+    reviweList.map((item) => {sum = Number(item.star) + sum})
+    const length = reviweList.length;
+    const rate = (sum/length).toFixed(1);
+    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
+    
     res.json({
       flag: true,
       message: '리뷰 등록 완료'
