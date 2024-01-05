@@ -185,13 +185,13 @@ router.post('/login', (req, res, next) => {
 
     req.login(user, (loginError) => {
       if (loginError) return next(loginError)
-        res.redirect('/')
+        // res.redirect('/')
       
-      // res.json({
-      //   flag: true,
-      //   message: '로그인 성공',
-      //   user
-      // })
+      res.json({
+        flag: true,
+        message: '로그인 성공',
+        user
+      })
     })
   })(req, res, next )
 })
