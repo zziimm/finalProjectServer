@@ -182,7 +182,9 @@ io.on('connection', (socket) => {
 });
 
 app.get('/getChatHeaderList', async (req, res) => {
-  const resulte = await db.collection('chat').find({ room: '디디' }).toArray();
+  const loginUser = req.user.userId;
+  console.log(loginUser);
+  const resulte = await db.collection('chat').find({ room: loginUser }).toArray();
   console.log(resulte);
   const chatData = resulte.map(room => {
     return (
@@ -201,11 +203,14 @@ app.get('/getChatHeaderList', async (req, res) => {
   });
 });
 
-app.get('/getChatting', async (req, res) => {
-  const from = req.query.from;
+// app.get('/getChatting/:id', async (req, res) => {
+app.post('/getChatting', async (req, res) => {
+  // const id = req.params.id;
+  const id = req.body.id;
+  // const from = req.query.from;
   // const from = '아아'
-  console.log('from'+from);
-  const resulte = await db.collection('chat').find({ user2: from }).toArray();
+  console.log('id'+id);
+  const resulte = await db.collection('chat').find({ user2: id }).toArray();
   console.log(resulte);
   res.json({
     message: '성공',
