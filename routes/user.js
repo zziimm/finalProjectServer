@@ -7,6 +7,7 @@ const router = express.Router();
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
+const { ObjectId } = require('mongodb');
 
 
 /**
@@ -216,5 +217,60 @@ router.get('/logout', (req, res, next) => {
     })
   })
 })
+
+// 유저 정보 변경
+router.post('/editPersonalInfo', async (req, res) => {
+  const { nick, dogType, dogName, dogAge } = req.body
+  const id = req.user._id;
+  try {
+    if (nick === '') {
+      throw new Error('닉네임을 입력해주세요!');
+    }
+    if (dogName === '') {
+      throw new Error('강아지 이름을 입력해주세요!');
+    }
+    if (dogAge === '') {
+      throw new Error('강아지 나이를 입력해주세요!');
+    }
+
+    await db.collection('userInfo').updateOne({
+      _id: new ObjectId(req.user._id)
+    },{
+      // nick, 회원가입할 때 있는지 확인
+      dogType,
+      dogAge,
+      dogName,
+    })
+    res.json({
+      flag: true,
+      message: '회원 정보 수정 성공'
+    })
+  } catch (error) {
+    console.error(error);
+    res.json({
+      flag: false,
+      message: error.message
+    })
+  }
+});
+
+// 회원 탈퇴
+router.get('/accoutQuit', async (req, res) => {
+  try {
+    await db.collection('userInfo').deleteOne({
+      _id: new ObjectId(req.user._id)
+    });
+    res.json({
+      flag: true,
+      message: '회원 탈퇴 성공'
+    })
+  } catch (err) {
+    res.json({
+      flag: false,
+      message: '회원 탈퇴 실패'
+    })
+  }
+});
+
 
 module.exports = router;
