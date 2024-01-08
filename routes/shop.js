@@ -75,8 +75,8 @@ router.get('/feed', async (req, res) => {
 router.post('/plusCart', async (req, res) => {
   const title = req.body.title;
   const price = req.body.price;
-  const postId = req.body.postId;
   const count = req.body.productCount;
+  const postId = req.body.postId;
   try {
     const user = req.user._id;
     await db.collection('cart').insertOne({ title, price, count, postId: new ObjectId(postId), user });

@@ -172,20 +172,30 @@ router.post('/register', async (req, res) => {
 
 
 
-// 로그인
+// 로그인 불러오기
 router.get('/login', async (req, res) => {
-  const result = await db.collection('userInfo').find({}).toArray();
-  // res.render('login');
-  res.json({
-    flag: true,
-    message: '불러오기 성공',
-    data: result
-  })
+  // console.log(req.user);
+  // const user = req.user._id;
+  if (req.user) {
+    const userId = req.user._id;
+    const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
+    // res.render('login');
+    res.json({
+      flag: true,
+      message: '불러오기 성공',
+      data: result
+    })
+  } else {
+    res.json({
+      flag: false,
+      message: '비로그인 상태',
+    })
+  }
 })
 
 
 
-router.post('/login', async (req, res, next) => {
+router.post('/login', (req, res, next) => {
 
   passport.authenticate('local', (authError, user, info) => {
     if (authError) {
@@ -196,7 +206,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     req.login(user, (loginError) => {
-      if (loginError) return next(loginError)
+      if (loginError) return next(loginError);
       // res.redirect('/')
 
       res.json({
@@ -205,16 +215,16 @@ router.post('/login', async (req, res, next) => {
         user
       })
     })
-  })(req, res, next)
-})
+  })(req, res, next);
+});
 
-router.get('/loginUser', (req, res) => {
-  res.json({
-    flag: true,
-    message: '유저정보 불러오기 성공',
-    data: req.user
-  })
-})
+// router.get('/loginUser', (req, res) => {
+//   res.json({
+//     flag: true,
+//     message: '유저정보 불러오기 성공',
+//     data: req.user
+//   })
+// })
 
 
 // 로그아웃
