@@ -35,6 +35,8 @@ const upload = multer({
 
 // 상품정보 불러오기 (전체)(초기 8개, 더보기 시 8개 추가)
 router.get('/', async (req, res) => {
+  console.log('샵'+req.user);
+  
   let posts;
   if (req.query.nextId) {
     posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) } }).limit(8).toArray();

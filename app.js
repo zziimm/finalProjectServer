@@ -154,6 +154,33 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('answer', async (data) => {
+    // msg, user2, id(로그인/답장유져), room(일단은 로그인한유져이름)
+    const listData = { user: data.id, msg: data.msg }
+    await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+    const resulte = await db.collection('chat').find({ room: data.room }).toArray();
+    const chatData = resulte.map(room => {
+      return (
+        {
+          user: room.user2, 
+          msg: room.chatList.pop().msg
+        }
+      )
+    });
+    // const from = chat.user2;
+    // const lastChat = chat.chatList.pop().msg
+    // const chatData = { from, lastChat }
+    const toInChatroom = await db.collection('chat').findOne({ user1: data.id, user2: data.user2 });
+
+    // const toInChatroom = { from: data.user2, msg: data.msg }
+    console.log('엔써'+chatData);
+    socket.join(data.room);
+
+
+    io.to(data.room).emit('throwData', chatData);
+    io.to(data.room).emit('throwChatData', toInChatroom);
+  });
+
   // fromHere
   socket.on('fromHere', async (data) => {
     const findChat = await db.collection('chat').findOne({ room: data.room, user1: data.room, user2: data.id });
@@ -175,48 +202,69 @@ io.on('connection', (socket) => {
     io.to(data.room).emit('inChatroom', toInChatroom);
   });
   
-  socket.on('login', (server) => {
+  socket.on('login', async (server) => {
     console.log('login'+server);
+    const resulte = await db.collection('chat').find({ room: server }).toArray();
+    const chatData = resulte.map(room => {
+      return (
+        {
+          user: room.user2, 
+          msg: room.chatList.pop().msg
+        }
+      )
+    });
     socket.join(server);
+    console.log('로그인'+chatData);
+    io.emit('throwData', chatData);
+  });
+
+  socket.on('getChatting', async (id) => {
+    const loginUser = '디디'
+    socket.join(loginUser);
+    const resulte = await db.collection('chat').findOne({ user1: loginUser, user2: id });
+    io.emit('throwChatData', resulte);
+    
   });
 });
 
-app.get('/getChatHeaderList', async (req, res) => {
-  const loginUser = req.user.userId;
-  console.log(loginUser);
-  const resulte = await db.collection('chat').find({ room: loginUser }).toArray();
-  console.log(resulte);
-  const chatData = resulte.map(room => {
-    return (
-      {
-        user: room.user2, 
-        msg: room.chatList.pop().msg
-      }
-    )
-  });
-  // const lastChat = resulte.map(room => room.chatList.pop().msg)
-  console.log(chatData);
+// 실시간 데이터 x
+// app.get('/getChatHeaderList', async (req, res) => {
+//   const loginUser = '디디'
+//   // const loginUser = req.user.userId;
+//   console.log('채팅'+req.user?.userId);
+//   const resulte = await db.collection('chat').find({ room: loginUser }).toArray();
+//   console.log(resulte);
+//   const chatData = resulte.map(room => {
+//     return (
+//       {
+//         user: room.user2, 
+//         msg: room.chatList.pop().msg
+//       }
+//     )
+//   });
+//   // const lastChat = resulte.map(room => room.chatList.pop().msg)
+//   console.log(chatData);
 
-  res.json({
-    flag: true,
-    chatData
-  });
-});
+//   res.json({
+//     flag: true,
+//     chatData
+//   });
+// });
 
 // app.get('/getChatting/:id', async (req, res) => {
-app.post('/getChatting', async (req, res) => {
-  // const id = req.params.id;
-  const id = req.body.id;
-  // const from = req.query.from;
-  // const from = '아아'
-  console.log('id'+id);
-  const resulte = await db.collection('chat').find({ user2: id }).toArray();
-  console.log(resulte);
-  res.json({
-    message: '성공',
-    resulte
-  })
-})
+// app.post('/getChatting', async (req, res) => {
+//   // const id = req.params.id;
+//   const id = req.body.id;
+//   // const from = req.query.from;
+//   // const from = '아아'
+//   console.log('id'+id);
+//   const resulte = await db.collection('chat').find({ user2: id }).toArray();
+//   console.log(resulte);
+//   res.json({
+//     message: '성공',
+//     resulte
+//   })
+// })
 
 
 app.use((req, res, next) => {
