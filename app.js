@@ -73,7 +73,6 @@ app.use(session({
 
 
 // 미들웨어 라우터 넣을 곳
-
 app.use('/shop', shopRouter);
 app.use('/', testRouter);
 app.use('/community', communityRouter)
