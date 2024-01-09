@@ -200,6 +200,7 @@ router.get('/daily', async (req, res) => {
 });
 
 // * 해당 글의 댓글과 함께 불러오게 수정 필요
+// * 해당 글의 댓글과 함께 불러오게 수정 필요
 // DailyDog_Detail_List
 router.get('/daily/detail/:postId', async (req, res) => {
   const postData = await db.collection('community').findOne({ id: Number(req.params.postId) });
