@@ -192,20 +192,29 @@ router.get('/daily', async (req, res) => {
 
 
 
-// 커뮤니티 삽입_데일리톡(일상)
+// DailyDog_Write
 router.post('/daily/insert', async (req, res) => {
-  // const userId = req.user._id;
-  // const inputdata = req.body.inputdata;
-  const id = req.body.id;
-  const title = req.body.title;
-  const content = req.body.content;
-  const author = req.body.author;
+
+  const { id, title, content, author, authorId, date } = req.body
+
   const imgUrl = req.body.imgUrl || '';
   const imgKey = req.body.imgKey || '';
   
   try {
-    // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ id, title, content, imgUrl, imgKey, author, type: 'daily'});
+    await db.collection('community').insertOne({ 
+      id, 
+      title, 
+      content, 
+      imgUrl, 
+      imgKey, 
+      author, 
+      authorId: new ObjectId(authorId), 
+      date, 
+      type: 'daily', 
+      view: 0, 
+      like: [],
+      dislike: []
+    });
     res.json({
       flag: true,
       message: '데이터 저장 성공(커뮤니티_자랑)',
@@ -285,7 +294,7 @@ router.delete('/daily/delete/:postId', async (req, res) => {
   }
 });
 
-// (추가) 해당글에 대한 댓글 불러오기
+// DailyDog_Comment_List
 router.get('/daily/comment', async (req, res) => {
   try {
     const commentList = await db.collection('comment').find({ postId: new ObjectId(req.query.postId) }).toArray();
@@ -293,20 +302,29 @@ router.get('/daily/comment', async (req, res) => {
   } catch (err) {
     console.error(err);
   }
+});
 
-})
+// DailyDog_View
+router.patch('/daily/view/:id', async (req, res) => {
+  try {
+    await db.collection('community').updateOne({ _id: new ObjectId(req.params.id)}, { $inc: { view: 1 }});
+    res.json({
+      flag: true,
+      message: '조회수 증가'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
-// 댓글달기_데일리톡(일상)
+// DailyDog_Comment_Write
 router.post('/daily/comment/insert', async (req, res) => {
-  const postId = req.body.postId;
-  // const user = req.user._id;
-  // const userId = req.user.userId;
-  const comment = req.body.newComment;
-  const date = req.body.date;
+  const { postId, comment, date, author, authorId } = req.body
+
   try {
     await db.collection('comment').insertOne({
-      // user,
-      // userId,
+      author,
+      authorId: new ObjectId(authorId),
       comment,
       date,
       postId: new ObjectId(postId),
@@ -321,38 +339,61 @@ router.post('/daily/comment/insert', async (req, res) => {
   }
 });
 
-// 좋아요_+_데일리톡(일상)
-router.post('/daily/like', async (req, res) => {
-  // const postId = req.params.postId;
-  const postId = req.body.postId;
-  const userId = req.user.userId;
+// DailyDog_Like_Up
+router.patch('/daily/likeup/:type', async (req, res) => {
+  const { postId, authorId } = req.body
+
+  console.log(req.params.type);
+
   try {
-    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId)});
-    thisPost.like?.find();
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
-    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    res.json({
-      flag: true,
-      message: '성공',
-      post
-    });
+    if (req.params.type === 'up') {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: new ObjectId(authorId) } });
+      const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      
+      res.json({
+        flag: true,
+        count: result.like.length,
+        message: '좋아요 증가',
+      });
+    } else {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: new ObjectId(authorId) } });
+      const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      
+      res.json({
+        flag: true,
+        count: result.like.length,
+        message: '좋아요 감소',
+      });
+    }
   } catch (err) {
     console.error(err);
   }
 });
-// 좋아요_-_데일리톡(일상)
-router.post('/daily/dislike', async (req, res) => {
-  // const postId = req.params.postId;
-  const postId = req.body.postId;
-  const userId = req.user.userId;
+
+// DailyDog_Like_Down
+router.patch('/daily/likedown/:type', async (req, res) => {
+  const { postId, authorId } = req.body
+
   try {
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId } });
-    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    res.json({
-      flag: true,
-      message: '성공',
-      post
-    });
+    if (req.params.type === 'up') {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { dislike: new ObjectId(authorId) } });
+      const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      
+      res.json({
+        flag: true,
+        count: result.dislike.length,
+        message: '좋아요 증가',
+      });
+    } else {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { dislike: new ObjectId(authorId) } });
+      const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      
+      res.json({
+        flag: true,
+        count: result.dislike.length,
+        message: '좋아요 감소',
+      });
+    }
   } catch (err) {
     console.error(err);
   }
