@@ -67,7 +67,6 @@ app.use(session({
   name: 'session-cookie'
 }));
 
-
 // passport 미들웨어 설정
 app.use(passport.initialize());
 app.use(passport.session());
