@@ -71,6 +71,17 @@ router.get('/feed', async (req, res) => {
   });
 });
 
+// 장바구니 불러오기
+router.post('/getCart', async (req, res) => {
+  const userId = req.user._id;
+  const result = await db.collection('cart').findOne({ user: userId });
+  res.json({
+    flag: true,
+    message: '장바구니 불러오기 성공',
+    result
+  });
+});
+
 // 장바구니 추가(로그인 한 사람)
 router.post('/plusCart', async (req, res) => {
   const title = req.body.title;
@@ -79,7 +90,21 @@ router.post('/plusCart', async (req, res) => {
   const postId = req.body.postId;
   try {
     const user = req.user._id;
-    await db.collection('cart').insertOne({ title, price, count, postId: new ObjectId(postId), user });
+    const hasCart = await db.collection('cart').findOne({ user });
+    if (hasCart) {
+      const hasItem = hasCart.list.filter(item => item.postId == postId);
+      if (hasItem.length > 0) {
+        // 이미 장바구니에 넣은 물건을 또 넣을 때
+        const nowCount = hasItem[0].count;
+        await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' : nowCount+count }});
+      } else {
+        const newArr = [...hasCart.list, {title, price, count, postId: new ObjectId(postId)}];
+        await db.collection('cart').updateOne({user}, {$set:{list: newArr}});
+      }
+    } else {
+      // 장바구니 첫 생성
+      await db.collection('cart').insertOne({ user, list: [{title, price, count, postId: new ObjectId(postId)}] });
+    }
     res.json({
       flag: true,
       message: '장바구니 추가 완료'
@@ -239,7 +264,7 @@ router.get('/reviewDeleteAll', async (req, res) => {
 router.get('/qna/:postId', async (req, res) => {
   try {
     const postId = req.params.postId
-    const itemQna = await db.collection('qna').find({ postId: new ObjectId(postId) }).toArray();
+    const itemQna = await db.collection('qna').find({ postId: postId }).toArray();
     res.json({
       flag: true,
       message: 'Q&N 불러오기 성공',
@@ -256,7 +281,7 @@ router.post('/qna/:postId', async (req, res) => {
     const postId = req.params.postId;
     const title = req.body.title;
     const content = req.body.content;
-    await db.collection('qna').insertOne({ title, content, postId: new ObjectId(postId), status: '답변대기' });
+    await db.collection('qna').insertOne({ title, content, postId: postId, status: '답변대기' });
     res.json({
       flag: true,
       message: 'Q&N 등록 완료'
