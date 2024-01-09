@@ -7,6 +7,7 @@ const router = express.Router();
 const multer = require('multer');
 const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
+const { ObjectId } = require('mongodb');
 
 
 /**
@@ -171,20 +172,30 @@ router.post('/register', async (req, res) => {
 
 
 
-// 로그인
+// 로그인 불러오기
 router.get('/login', async (req, res) => {
-  const result = await db.collection('userInfo').find({}).toArray();
-  // res.render('login');
-  res.json({
-    flag: true,
-    message: '불러오기 성공',
-    data: result
-  })
+  // console.log(req.user);
+  // const user = req.user._id;
+  if (req.user) {
+    const userId = req.user._id;
+    const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
+    // res.render('login');
+    res.json({
+      flag: true,
+      message: '불러오기 성공',
+      data: result
+    })
+  } else {
+    res.json({
+      flag: false,
+      message: '비로그인 상태',
+    })
+  }
 })
 
 
 
-router.post('/login', async (req, res, next) => {
+router.post('/login', (req, res, next) => {
 
   passport.authenticate('local', (authError, user, info) => {
     if (authError) {
@@ -195,7 +206,7 @@ router.post('/login', async (req, res, next) => {
     }
 
     req.login(user, (loginError) => {
-      if (loginError) return next(loginError)
+      if (loginError) return next(loginError);
       // res.redirect('/')
 
       res.json({
@@ -204,16 +215,16 @@ router.post('/login', async (req, res, next) => {
         user
       })
     })
-  })(req, res, next)
-})
+  })(req, res, next);
+});
 
-router.get('/loginUser', (req, res) => {
-  res.json({
-    flag: true,
-    message: '유저정보 불러오기 성공',
-    data: req.user
-  })
-})
+// router.get('/loginUser', (req, res) => {
+//   res.json({
+//     flag: true,
+//     message: '유저정보 불러오기 성공',
+//     data: req.user
+//   })
+// })
 
 
 // 로그아웃
@@ -227,5 +238,60 @@ router.get('/logout', (req, res, next) => {
     })
   })
 })
+
+// 유저 정보 변경
+router.post('/editPersonalInfo', async (req, res) => {
+  const { nick, dogType, dogName, dogAge } = req.body
+  const id = req.user._id;
+  try {
+    if (nick === '') {
+      throw new Error('닉네임을 입력해주세요!');
+    }
+    if (dogName === '') {
+      throw new Error('강아지 이름을 입력해주세요!');
+    }
+    if (dogAge === '') {
+      throw new Error('강아지 나이를 입력해주세요!');
+    }
+
+    await db.collection('userInfo').updateOne({
+      _id: new ObjectId(req.user._id)
+    },{
+      // nick, 회원가입할 때 있는지 확인
+      dogType,
+      dogAge,
+      dogName,
+    })
+    res.json({
+      flag: true,
+      message: '회원 정보 수정 성공'
+    })
+  } catch (error) {
+    console.error(error);
+    res.json({
+      flag: false,
+      message: error.message
+    })
+  }
+});
+
+// 회원 탈퇴
+router.get('/accoutQuit', async (req, res) => {
+  try {
+    await db.collection('userInfo').deleteOne({
+      _id: new ObjectId(req.user._id)
+    });
+    res.json({
+      flag: true,
+      message: '회원 탈퇴 성공'
+    })
+  } catch (err) {
+    res.json({
+      flag: false,
+      message: '회원 탈퇴 실패'
+    })
+  }
+});
+
 
 module.exports = router;
