@@ -171,22 +171,15 @@ router.get('/', async (req, res) => {
 
 // DailyDog_List
 router.get('/daily', async (req, res) => {
-  const postsPerPage = 9; // 페이지 당 콘텐츠 개수
-  const currentPage = req.query.page || 1; // 현재 페이지
-  
-  // const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
-  const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 9).limit(9).toArray();
-  // console.log(posts);
-  // const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
-  // const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
-  // res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
-  // res.json(posts);
-
   try {
-    const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip((req.query.page - 1) * 9).limit(9).toArray();
+    const { perPage, selectPage } = req.query
+    const ListsPerPage = Number(perPage); 
+    const currentPage = selectPage || 1;
+
+    const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip((currentPage - 1) * ListsPerPage).limit(ListsPerPage).toArray();
     const totalCount = await db.collection('community').countDocuments({ type: 'daily' });
 
-    const numOfPage = Math.ceil(totalCount / postsPerPage);
+    const numOfPage = Math.ceil(totalCount / ListsPerPage);
     
     res.json({
       flag: true,
@@ -199,7 +192,6 @@ router.get('/daily', async (req, res) => {
   }
 });
 
-// * 해당 글의 댓글과 함께 불러오게 수정 필요
 // * 해당 글의 댓글과 함께 불러오게 수정 필요
 // DailyDog_Detail_List
 router.get('/daily/detail/:postId', async (req, res) => {
