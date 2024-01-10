@@ -162,13 +162,10 @@ router.get('/detail/:postId', async (req, res) => {
   try {
     const postId = req.params.postId;
     const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
-    // 상세정보 더미 만들고 내려줘야함 (지금없음)
-    // const itemDetail = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
     res.json({
       flag: true,
       message: '상세정보 불러오기 성공',
-      itemDetail,
-  
+      itemDetail, 
     });
   } catch (err) {
     console.error(err);
@@ -200,8 +197,9 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
     const imgUrl = req.file?.location || 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/No_image_available.svg/300px-No_image_available.svg.png';
     const star = req.body.star;
     const imgKey = req.file?.key || 'NoImage';
+    const user = req.user._id;
     
-    await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey });
+    await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey, user });
     const reviweList = await db.collection('review').find({ postId: postId }).toArray();
     let sum = 0;
     reviweList.map((item) => {sum = Number(item.star) + sum})
@@ -320,13 +318,14 @@ router.post('/purchase', async (req, res) => {
 });
 
 // 구매 목록에 추가
-router.post('/purchase/add', async (req, res) => {
+router.post('/purchaseAdd', async (req, res) => {
   try {
-    const userId = req.body.userId;
     const postId = req.body.postId;
-    const count = req.body.count;
-    const date = req.body.date;
-    await db.collection('purchase').insertOne({ userId, postId, count, date });
+    const count = req.body.productCount;
+    const user = req.user._id;
+    const date = new Date();
+
+    await db.collection('purchase').insertOne({ postId, count, user, date });
     res.json({
       flag: true,
       message: '구매 목록 추가 성공',
