@@ -35,39 +35,36 @@ const upload = multer({
 
 // 상품정보 불러오기 (전체)(초기 8개, 더보기 시 8개 추가)
 router.get('/', async (req, res) => {
+  // const category = req.params.category;
   let posts;
-  let end;
   if (req.query.nextId) {
+    console.log('실행');
     posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) } }).limit(8).toArray();
-    if (posts.length < 8) end = true;
   } else {
     posts = await db.collection('shop').find({}).limit(8).toArray();
   }
-  // res.render('write.ejs', { posts })
   res.json({
     flag: true,
     message: '성공적으로 상품을 가져왔습니다.',
     posts,
-    end
   });
 });
 
 // 상품정보 불러오기(초기 8개, 더보기 시 8개 추가)
 // 상품 태그별로 보여주기 feed
 // 현재 feed 뿐 만들어진 더미 없음 (이미지 없는 이슈..)
-router.get('/feed', async (req, res) => {
+router.get('/category/:cate', async (req, res) => {
+  const cate = req.params.cate;
   let posts;
   if (req.query.nextId) {
-    posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) }, tag: 'feed' }).limit(8).toArray();
+    posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) }, tag: cate }).limit(8).toArray();
   } else {
-    posts = await db.collection('shop').find({ tag: 'feed' }).limit(8).toArray();
+    posts = await db.collection('shop').find({ tag: cate }).limit(8).toArray();
   }
-  console.log(posts);
-  // res.render('write.ejs', { posts })
   res.json({
     flag: true,
     message: '성공적으로 상품을 가져왔습니다.(feed)',
-    posts
+    posts,
   });
 });
 
