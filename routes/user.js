@@ -224,6 +224,7 @@ router.get('/loginUser', (req, res) => {
     message: '유저정보 불러오기 성공',
     data: req.user
   })
+  console.log(req.data);
 })
 
 
