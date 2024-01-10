@@ -81,6 +81,7 @@ router.get('/insert', (req, res) => {
 
 // 커뮤니티 삽입_중고
 router.post('/insert', upload.array('img'), async (req, res) => {
+  console.log(req.user);
   const { id, title, content, price, category } = req.body;
   // const user = req.user.userId
   // console.log(user);
@@ -91,7 +92,7 @@ router.post('/insert', upload.array('img'), async (req, res) => {
   
   try {
     const data = await db.collection('vincommunity').insertOne({
-    title, content, price, category, imgUrl, imgKey, user:req.user, id
+    title, content, price, category, imgUrl, imgKey, user:req.user.userId, id
     })
     res.json({
       flag: true,
