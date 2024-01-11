@@ -138,39 +138,42 @@ router.post('/deleteCart', async (req, res) => {
 // 수량 1개씩 추가 버튼
 router.post('/plusCount', async (req, res) => {
   const postId = req.body.postId;
-  const user = req.user._id;
   try {
-    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 }});
-    const result = await db.collection('cart').findOne({ postId, user });
-    const count = result.count;
+    const user = req.user._id;
+    const cart = await db.collection('cart').findOne({ user });
+    const element = cart.list.filter(item => item.postId == postId);
+    const nowCount = element[0].count;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' :  nowCount+1}});
+    const result = await db.collection('cart').findOne({ user });
     res.json({
       flag: true,
       message: '카운트 +1 성공',
-      count
+      result
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
   }
 });
 
 // 수량 1개씩 다운 버튼
 router.post('/minusCount', async (req, res) => {
   const postId = req.body.postId;
-  const user = req.user._id;
   try {
-    const data = await db.collection('cart').findOne({ postId, user });
-    if (data.count === '1' ) {
-      throw new Error('1 이하로 감소시킬 수 없습니다');
-    } else {
-      await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 }});
-      const result = await db.collection('cart').findOne({ postId, user });
-      const count = result.count;
-      res.json({
-        flag: true,
-        message: '카운트 -1 성공',
-        count
-      });
-    }
+    const user = req.user._id;
+    const cart = await db.collection('cart').findOne({ user });
+    const element = cart.list.filter(item => item.postId == postId);
+    const nowCount = element[0].count;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' :  nowCount-1}});
+    const result = await db.collection('cart').findOne({ user });
+    res.json({
+      flag: true,
+      message: '카운트 -1 성공',
+      result
+    });
   } catch (err) {
     console.error(err);
     res.json({
@@ -186,7 +189,8 @@ router.get('/purchaseAdds', async (req, res) => {
     const userId = req.user._id;
     const cartList = await db.collection('cart').findOne({user: userId});
     const { user, list } = cartList;
-    await db.collection('purchase').insertOne({ user, list });
+    const date = new Date();
+    await db.collection('purchase').insertOne({ user, list, date });
     await db.collection('cart').deleteOne({user: new ObjectId(userId)});
     res.json({
       flag: true,
