@@ -287,6 +287,16 @@ router.patch('/daily/edit/:postId', async (req, res) => {
     const imgUrl = req.body.imgUrl || '';
     const imgKey = req.body.imgKey || '';
 
+    if (imgKey) {
+      const prevImage = db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
+  
+      const extractImages = (images) => images.map(item => item.imgKey);
+
+      imgKey
+
+    }
+
+    console.log(imgKey);
     // imgKey 배열로 옴, 기존 있는 imgKey 와 검사하여 없는 값은 지워주자!
     // if (!imgKey) {
     //   const thisPost = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
