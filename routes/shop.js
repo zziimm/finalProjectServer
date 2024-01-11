@@ -320,12 +320,13 @@ router.get('/qna/:postId', async (req, res) => {
 
 // 상품 Q&A 작성하기
 router.post('/qna/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const title = req.body.title;
+  const content = req.body.content;
+  const date = req.body.date;
   try {
-    const postId = req.params.postId;
-    const title = req.body.title;
-    const content = req.body.content;
-    const date = req.body.date;
-    await db.collection('qna').insertOne({ date, title, content, postId: postId, status: '답변대기' });
+    const user = req.user._id;
+    await db.collection('qna').insertOne({ date, title, content, postId, user, status: '답변대기' });
     res.json({
       flag: true,
       message: 'Q&N 등록 완료'
