@@ -110,7 +110,7 @@ const upload = multer({
 
 router.post('/register', async (req, res) => {
   console.log(req.body);
-  const { userId, passwd, signEmail, signUserNicname, signDogType, signDogAge, signDogName } = req.body
+  const { userId, passwd, signEmail, signUserNicname, signDogType, signDogAge, signDogWeight, signDogName } = req.body
 
   // 정규표현식
   const userIdRegex = /^[a-zA-Z0-9]{4,10}$/;
@@ -152,6 +152,7 @@ router.post('/register', async (req, res) => {
       signUserNicname,
       signDogType,
       signDogAge,
+      signDogWeight,
       signDogName,
 
 

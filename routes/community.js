@@ -542,8 +542,9 @@ router.get('/Toktok/ddd', async (req, res) => { // 톡톡 다 삭제ㅁㅁㅇㄴ
 // 조회수 육아톡톡 ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
 router.post('/toktok/view', async (req, res) => {
   // const postId = req.params.postId;
+  console.log(req.body);
   const postId = req.body.postId;
-  const userId = req.body.user;
+  const userId = req.body._id;
   console.log(req.body.user);
   try {
     // const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
