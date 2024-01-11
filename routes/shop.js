@@ -281,7 +281,8 @@ router.post('/qna/:postId', async (req, res) => {
     const postId = req.params.postId;
     const title = req.body.title;
     const content = req.body.content;
-    await db.collection('qna').insertOne({ title, content, postId: postId, status: '답변대기' });
+    const date = req.body.date;
+    await db.collection('qna').insertOne({ date, title, content, postId: postId, status: '답변대기' });
     res.json({
       flag: true,
       message: 'Q&N 등록 완료'
