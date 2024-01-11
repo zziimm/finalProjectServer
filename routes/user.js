@@ -20,8 +20,19 @@ const { ObjectId } = require('mongodb');
 
 // 회원가입
 // ejs 추후 삭제
-router.get('/register', (req, res) => {
-  res.render('register');
+router.get('/register', async (req, res) => {
+  // res.render('register');
+  try {
+    const signUserInfoGet = await db.collection('userInfo').findOne({})
+    res.json({
+      flag: true,
+      message: '회원 정보 받음',
+      data: signUserInfoGet
+    })
+  } catch (error) {
+    console.error(error);
+  }
+
 });
 
 // 프로필
@@ -100,7 +111,7 @@ const upload = multer({
 
 router.post('/register', async (req, res) => {
   console.log(req.body);
-  const { userId, passwd, signEmail, signUserNicname, signDogType, signDogAge, signDogName } = req.body
+  const { userId, passwd, signEmail, signUserNicname, signDogType, signDogAge, signDogWeight, signDogName } = req.body
 
   // 정규표현식
   const userIdRegex = /^[a-zA-Z0-9]{4,10}$/;
@@ -142,6 +153,7 @@ router.post('/register', async (req, res) => {
       signUserNicname,
       signDogType,
       signDogAge,
+      signDogWeight,
       signDogName,
 
 
@@ -217,6 +229,7 @@ router.post('/login', (req, res, next) => {
     })
   })(req, res, next);
 });
+
 
 // router.get('/loginUser', (req, res) => {
 //   res.json({
