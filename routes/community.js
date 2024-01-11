@@ -173,7 +173,7 @@ router.get('/', async (req, res) => {
 router.get('/daily', async (req, res) => {
   const postsPerPage = 9; // 페이지 당 콘텐츠 개수
   const currentPage = req.query.page || 1; // 현재 페이지
-  
+
   // const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
   const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 9).limit(9).toArray();
   // console.log(posts);
@@ -187,7 +187,7 @@ router.get('/daily', async (req, res) => {
     const totalCount = await db.collection('community').countDocuments({ type: 'daily' });
 
     const numOfPage = Math.ceil(totalCount / postsPerPage);
-    
+
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
@@ -219,17 +219,17 @@ router.post('/daily/insert', async (req, res) => {
   const imgKey = req.body.imgKey || '';
 
   try {
-    await db.collection('community').insertOne({ 
-      id, 
-      title, 
-      content, 
-      imgUrl, 
-      imgKey, 
-      author, 
-      authorId: new ObjectId(authorId), 
-      date, 
-      type: 'daily', 
-      view: 0, 
+    await db.collection('community').insertOne({
+      id,
+      title,
+      content,
+      imgUrl,
+      imgKey,
+      author,
+      authorId: new ObjectId(authorId),
+      date,
+      type: 'daily',
+      view: 0,
       like: [],
       dislike: []
     });
@@ -258,7 +258,7 @@ router.post('/daily/insert/image', upload.single('img'), async (req, res) => {
 // DailyDog_View
 router.patch('/daily/view/:id', async (req, res) => {
   try {
-    await db.collection('community').updateOne({ _id: new ObjectId(req.params.id)}, { $inc: { view: 1 }});
+    await db.collection('community').updateOne({ _id: new ObjectId(req.params.id) }, { $inc: { view: 1 } });
     res.json({
       flag: true,
       message: '조회수 증가'
@@ -278,7 +278,7 @@ router.patch('/daily/likeup/:type', async (req, res) => {
     if (req.params.type === 'up') {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: new ObjectId(authorId) } });
       const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-      
+
       res.json({
         flag: true,
         count: result.like.length,
@@ -287,7 +287,7 @@ router.patch('/daily/likeup/:type', async (req, res) => {
     } else {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: new ObjectId(authorId) } });
       const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-      
+
       res.json({
         flag: true,
         count: result.like.length,
@@ -307,7 +307,7 @@ router.patch('/daily/likedown/:type', async (req, res) => {
     if (req.params.type === 'up') {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { dislike: new ObjectId(authorId) } });
       const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-      
+
       res.json({
         flag: true,
         count: result.dislike.length,
@@ -316,7 +316,7 @@ router.patch('/daily/likedown/:type', async (req, res) => {
     } else {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { dislike: new ObjectId(authorId) } });
       const result = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-      
+
       res.json({
         flag: true,
         count: result.dislike.length,
@@ -332,7 +332,7 @@ router.patch('/daily/likedown/:type', async (req, res) => {
 router.get('/daily/comment', async (req, res) => {
   try {
     const commentList = await db.collection('comment').find({ postId: new ObjectId(req.query.postId) }).toArray();
-    res.json(commentList)  
+    res.json(commentList)
   } catch (err) {
     console.error(err);
   }
@@ -494,16 +494,17 @@ router.get('/toktok/detail/:postId', async (req, res) => {
 
 // 커뮤니티 삽입_육아톡톡
 router.post('/toktok/insert', upload.single('imgUrl'), async (req, res) => {
+  console.log(req.body);
   const mydate = new Date();
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
-  const author = req.body.author || '';
+  const author = req.body.user.signUserNicname || '';
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
-  const like = req.body.like;
-  const view = req.body.view;
+  const like = [];
+  const view = [];
   const user = req.body.user;
   const date = mydate;
 
@@ -608,64 +609,97 @@ router.get('/Toktok/ddd', async (req, res) => { // 톡톡 다 삭제ㅁㅁㅇㄴ
   await db.collection('community').deleteMany({ type: "toktok" });
 });
 
-// 조회수 육아톡톡 ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+// 조회수 육아톡톡
 router.post('/toktok/view', async (req, res) => {
-  // const postId = req.params.postId;
-  console.log(req.body);
   const postId = req.body.postId;
-  const userId = req.body._id;
-  console.log(req.body.user);
+  const userId = req.body.user;
   try {
-    // const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    // thisPost.like?.find();
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId._id } });
-    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    res.json({
-      flag: true,
-      message: '성공',
-      post
+    const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    const 중복제거필터 = 중복제거.view?.filter((a) => {
+      return a === new ObjectId(userId._id)
     });
+    if (!중복제거필터) {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId._id } });
+      const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      res.json({
+        flag: true,
+        message: '성공',
+        post
+      });
+    }
   } catch (err) {
     console.error(err);
   }
 });
 
-// 좋아요_+_육아톡톡
+// 좋아요 육아톡톢
 router.post('/toktok/like', async (req, res) => {
-  // const postId = req.params.postId;
   const postId = req.body.postId;
-  const userId = req.user.userId;
+  const userId = req.body.user;
   try {
-    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    thisPost.like?.find();
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
-    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    res.json({
-      flag: true,
-      message: '성공',
-      post
+    const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    const 중복제거필터 = 중복제거?.like.filter((a) => {
+      return a === new ObjectId(userId?._id)
     });
+    console.log(중복제거필터);
+    if (!중복제거필터) {
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId._id } });
+      // const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      res.json({
+        flag: true,
+        message: '성공',
+        // post
+      });
+    } else {
+      await db.collection('community').deleteOne({ _id: new ObjectId(postId) }, { $push: { like: userId._id } });
+      // const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+      res.json({
+        flag: true,
+        message: '취소성공',
+        // post
+      });
+    }
   } catch (err) {
     console.error(err);
   }
 });
-// 좋아요_-_육아톡톡
-router.post('/toktok/dislike', async (req, res) => {
-  // const postId = req.params.postId;
-  const postId = req.body.postId;
-  const userId = req.user.userId;
-  try {
-    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId } });
-    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-    res.json({
-      flag: true,
-      message: '성공',
-      post
-    });
-  } catch (err) {
-    console.error(err);
-  }
-});
+
+// // 좋아요_+_육아톡톡
+// router.post('/toktok/like', async (req, res) => {
+//   // const postId = req.params.postId;
+//   const postId = req.body.postId;
+//   const userId = req.user.userId;
+//   try {
+//     const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+//     thisPost.like?.find();
+//     await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
+//     const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+//     res.json({
+//       flag: true,
+//       message: '성공',
+//       post
+//     });
+//   } catch (err) {
+//     console.error(err);
+//   }
+// });
+// // 좋아요_-_육아톡톡
+// router.post('/toktok/dislike', async (req, res) => {
+//   // const postId = req.params.postId;
+//   const postId = req.body.postId;
+//   const userId = req.user.userId;
+//   try {
+//     await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId } });
+//     const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+//     res.json({
+//       flag: true,
+//       message: '성공',
+//       post
+//     });
+//   } catch (err) {
+//     console.error(err);
+//   }
+// });
 
 
 

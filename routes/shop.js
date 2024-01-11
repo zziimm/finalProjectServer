@@ -93,14 +93,14 @@ router.post('/plusCart', async (req, res) => {
       if (hasItem.length > 0) {
         // 이미 장바구니에 넣은 물건을 또 넣을 때
         const nowCount = hasItem[0].count;
-        await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' : nowCount+count }});
+        await db.collection('cart').updateOne({ user, list: { $elemMatch: { postId: new ObjectId(postId) } } }, { $set: { 'list.$.count': nowCount + count } });
       } else {
-        const newArr = [...hasCart.list, {title, price, count, postId: new ObjectId(postId)}];
-        await db.collection('cart').updateOne({user}, {$set:{list: newArr}});
+        const newArr = [...hasCart.list, { title, price, count, postId: new ObjectId(postId) }];
+        await db.collection('cart').updateOne({ user }, { $set: { list: newArr } });
       }
     } else {
       // 장바구니 첫 생성
-      await db.collection('cart').insertOne({ user, list: [{title, price, count, postId: new ObjectId(postId)}] });
+      await db.collection('cart').insertOne({ user, list: [{ title, price, count, postId: new ObjectId(postId) }] });
     }
     res.json({
       flag: true,
@@ -116,7 +116,7 @@ router.post('/plusCount', async (req, res) => {
   const postId = req.body.postId;
   const user = req.user._id;
   try {
-    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 }});
+    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 } });
     const result = await db.collection('cart').findOne({ postId, user });
     const count = result.count;
     res.json({
@@ -135,10 +135,10 @@ router.post('/minusCount', async (req, res) => {
   const user = req.user._id;
   try {
     const data = await db.collection('cart').findOne({ postId, user });
-    if (data.count === '1' ) {
+    if (data.count === '1') {
       throw new Error('1 이하로 감소시킬 수 없습니다');
     } else {
-      await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 }});
+      await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 } });
       const result = await db.collection('cart').findOne({ postId, user });
       const count = result.count;
       res.json({
@@ -165,7 +165,7 @@ router.get('/detail/:postId', async (req, res) => {
     res.json({
       flag: true,
       message: '상세정보 불러오기 성공',
-      itemDetail, 
+      itemDetail,
     });
   } catch (err) {
     console.error(err);
@@ -198,15 +198,15 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
     const star = req.body.star;
     const imgKey = req.file?.key || 'NoImage';
     const user = req.user._id;
-    
+
     await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey, user });
     const reviweList = await db.collection('review').find({ postId: postId }).toArray();
     let sum = 0;
-    reviweList.map((item) => {sum = Number(item.star) + sum})
+    reviweList.map((item) => { sum = Number(item.star) + sum })
     const length = reviweList.length;
-    const rate = (sum/length).toFixed(1);
-    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
-    
+    const rate = (sum / length).toFixed(1);
+    await db.collection('shop').updateOne({ _id: new ObjectId(postId) }, { $set: { rate } });
+
     res.json({
       flag: true,
       message: '리뷰 등록 완료'
@@ -229,10 +229,10 @@ router.post('/reviewDelete', async (req, res) => {
     })
     const reviweList = await db.collection('review').find({ postId: postId }).toArray();
     let sum = 0;
-    reviweList.map((item) => {sum = Number(item.star) + sum})
+    reviweList.map((item) => { sum = Number(item.star) + sum })
     const length = reviweList.length;
-    const rate = (sum/length).toFixed(1);
-    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
+    const rate = (sum / length).toFixed(1);
+    await db.collection('shop').updateOne({ _id: new ObjectId(postId) }, { $set: { rate } });
 
     res.json({
       flag: true,
@@ -418,7 +418,7 @@ module.exports = router;
 // //       throw new Error('삭제 실패');
 // //     }
 // //     res.json({
-// //       flag: true, 
+// //       flag: true,
 // //       message: '삭제 성공'
 // //     });
 // //   } catch (err) {
@@ -439,7 +439,7 @@ module.exports = router;
 //       throw new Error('삭제 실패');
 //     }
 //     res.json({
-//       flag: true, 
+//       flag: true,
 //       message: '삭제 성공'
 //     });
 //   } catch (err) {
