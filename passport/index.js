@@ -12,12 +12,12 @@ module.exports = () => {
 
   passport.deserializeUser(async (id, done) => { 
     try {
-      const user = await db.collection('userInfo').findOne({_id: new ObjectId(id)})
+      const user = await db.collection('userInfo').findOne({_id: new ObjectId(id)});
       done(null, user)
     } catch (err) {
       done(err)
     }
   })
 
-  local()
-}
+  local();
+};
