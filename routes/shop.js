@@ -95,6 +95,7 @@ router.post('/plusCart', async (req, res) => {
         const nowCount = hasItem[0].count;
         await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' : nowCount+count }});
       } else {
+        // 장바구니는 있는데 없던 물건일 때
         const newArr = [...hasCart.list, {title, price, count, postId: new ObjectId(postId)}];
         await db.collection('cart').updateOne({user}, {$set:{list: newArr}});
       }
@@ -108,6 +109,29 @@ router.post('/plusCart', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+  }
+});
+
+// 장바구니에서 삭제
+router.post('/deleteCart', async (req, res) => {
+  try {
+    let postId = req.body.postId;
+    const user = req.user._id;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)}}}, {
+      $pull: { list: {postId: new ObjectId(postId)} }
+    });
+    const result = await db.collection('cart').findOne({ user });
+    res.json({
+      flag: true,
+      message: '삭제 성공',
+      result
+    })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '삭제 실패'
+    })
   }
 });
 
@@ -156,6 +180,26 @@ router.post('/minusCount', async (req, res) => {
   }
 });
 
+// 장바구니에서 구매 후 구매 목록에 추가, 장바구니 비우기
+router.get('/purchaseAdds', async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const cartList = await db.collection('cart').findOne({user: userId});
+    const { user, list } = cartList;
+    await db.collection('purchase').insertOne({ user, list });
+    await db.collection('cart').deleteOne({user: new ObjectId(userId)});
+    res.json({
+      flag: true,
+      message: '구매 완료 및 장바구니 삭제'
+    })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '구매 실패'
+    })
+  }
+});
 
 // 상품 상세페이지 가져오기
 router.get('/detail/:postId', async (req, res) => {
@@ -318,7 +362,7 @@ router.post('/purchase', async (req, res) => {
   }
 });
 
-// 구매 목록에 추가
+// 상세화면에서 구매 후 구매 목록에 추가
 router.post('/purchaseAdd', async (req, res) => {
   try {
     const postId = req.body.postId;
