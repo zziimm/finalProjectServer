@@ -306,12 +306,12 @@ router.get('/reviewDeleteAll', async (req, res) => {
 // 상품 상세페이지_Q&A 가져오기
 router.get('/qna/:postId', async (req, res) => {
   try {
-    const postId = req.params.postId
+    const postId = req.params.postId;
     const itemQna = await db.collection('qna').find({ postId: postId }).toArray();
     res.json({
       flag: true,
       message: 'Q&N 불러오기 성공',
-      itemQna
+      itemQna,
     });
   } catch (err) {
     console.error(err);
@@ -326,10 +326,11 @@ router.post('/qna/:postId', async (req, res) => {
   const date = req.body.date;
   try {
     const user = req.user._id;
-    await db.collection('qna').insertOne({ date, title, content, postId, user, status: '답변대기' });
+    const userName = req.user.signUserNicname;
+    await db.collection('qna').insertOne({ date, title, content, postId, user, userName, status: '답변대기' });
     res.json({
       flag: true,
-      message: 'Q&N 등록 완료'
+      message: 'Q&A 등록 완료'
     });
   } catch (err) {
     console.error(err);
