@@ -866,7 +866,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
 
 
 // 쇼핑몰아이템 삽입 (관리자)
-router.post('/insertShopItem', upload.array('img'), async (req, res) => {
+router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const brand = req.body.brand;
@@ -876,8 +876,10 @@ router.post('/insertShopItem', upload.array('img'), async (req, res) => {
   const size = req.body.size;
   const tag = req.body.tag;
   console.log(req.files);
-  const imgUrl = req.files.map(url => url.location) || '';
-  const imgKey = req.files.map(url => url.key) || '';
+  const imgUrl = req.file.location || '';
+  const imgKey = req.file.key || '';
+  // const imgUrl = req.files.map(url => url.location) || '';
+  // const imgKey = req.files.map(url => url.key) || '';
   console.log(imgUrl);
   console.log(imgKey);
   // const imgUrl = req.file?.location || '';
@@ -940,6 +942,8 @@ router.post('/daily/editShopItem/:itemId', upload.single('img'), async (req, res
 router.get('/testChat', async (req, res) => {
   res.render('chat.ejs');
 });
+
+
 
 
 
