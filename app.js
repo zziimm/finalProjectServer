@@ -8,9 +8,7 @@ const cors = require('cors');
 const passport = require('passport');
 const api = require('./swagger/swagger')
 
-
-const app = express();  
-
+const app = express(); 
 // socket.io
 const http = require('http').createServer(app);
 // const { Server } = require('socket.io');
@@ -26,28 +24,26 @@ const { swaggerUi, specs } = require('./swagger/swagger');
 
 dotenv.config();
 
-
-// 라우터 넣을 곳
-const shopRouter = require('./routes/shop')
 const { connect, client } = require('./database/index');
 const db = client.db('lastTeamProject');
 const passportConfig = require('./passport');
 
 
-
 // 라우터 가져오기
-const userRouter = require('./routes/user')
-const mainRouter = require('./routes/index')
-const testRouter = require('./routes/index');
+// const testRouter = require('./routes/index');
+const mainRouter = require('./routes/index');
+const userRouter = require('./routes/user');
+const shopRouter = require('./routes/shop')
 const communityRouter = require('./routes/community');
 const vintageCommunityRouter = require('./routes/vintage');
 const { ObjectId } = require('mongodb');
 app.set('port', process.env.PORT || 8088);
+
+ 
 passportConfig();
 connect();
 app.set('view engine', 'ejs'); 
 app.set('views', path.join(__dirname, 'views')); 
-
 
 
 app.use(cors({
@@ -72,16 +68,9 @@ app.use(session({
   name: 'session-cookie'
 }));
 
-
-// 미들웨어 라우터 넣을 곳
-
-app.use('/shop', shopRouter);
-app.use('/', testRouter);
-app.use('/community', communityRouter)
 // passport 미들웨어 설정
 app.use(passport.initialize());
 app.use(passport.session());
-
 
 
 // req.user 사용
@@ -92,8 +81,10 @@ app.use((req, res, next) => {
 
 
 // 라우터를 미들웨어로 등록
-app.use('/user', userRouter);
 app.use('/', mainRouter);
+app.use('/user', userRouter);
+app.use('/shop', shopRouter);
+app.use('/community', communityRouter)
 app.use('/vintage', vintageCommunityRouter);
 
 // socket 테스트

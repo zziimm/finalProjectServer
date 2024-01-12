@@ -14,12 +14,12 @@ module.exports = () => {
   passport.deserializeUser(async (id, done) => { 
     console.log('서버로그인 아이디2'+id);
     try {
-      const user = await db.collection('userInfo').findOne({_id: new ObjectId(id)})
+      const user = await db.collection('userInfo').findOne({_id: new ObjectId(id)});
       done(null, user)
     } catch (err) {
       done(err)
     }
   })
 
-  local()
-}
+  local();
+};
