@@ -101,15 +101,13 @@ app.get('/socket', async (req, res) => {
   // await db.collection('chat').find({});
   res.render('socket.ejs');
 });
-// socket
 
+// socket
 io.on('connection', (socket) => {
   console.log(io.httpServer._connections);
   // if (io.httpServer._connections !== 1) {
   // }
-  socket.on('disconnect', () => {
-    console.log('user disconnected');
-  });
+
   // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
   socket.on('login', async (server) => {
@@ -118,36 +116,6 @@ io.on('connection', (socket) => {
     // io.emit('throwData', chatData);
   });
   
-
-  // 연습
-  socket.on('userSend', async (data) => {
-    console.log('유저가 보낸 메세지:', data.msg);
-    console.log('유저아이디:', data.id);
-    if (data.room !== data.id) {
-      const findChat = await db.collection('chat').findOne({ user1: data.room, user2: data.id });
-      console.log(findChat);
-      if (!findChat) {
-        await db.collection('chat').insertOne({ user1: data.room, user2: data.id });
-        
-      }
-    }
-    console.log('data.room'+data.room);
-    console.log('data.id'+data.id);
-    const findUser = await db.collection('chat').findOne({ user1: data.room, user2: data.id });
-    console.log(findUser);
-    if (findUser.user1 === data.room) {
-      await db.collection('chat').updateOne({ user1: data.room, user2: data.id }, { $push: { user1Chat: data.msg } });
-    } else if (findUser.user2 === data.id) {
-      await db.collection('chat').updateOne({ user1: data.room, user2: data.id }, { $push: { user2Chat: data.msg } });
-      
-    }
-    if (data.room) {
-      io.to(data.room).emit('sendMsg', data);
-    } else {
-      // 전체메세지로 감
-      io.emit('sendMsg', false);
-    }
-  });
 
   // 실사용
   socket.on('answer', async (data) => {
@@ -166,7 +134,11 @@ io.on('connection', (socket) => {
     console.log('이프아래');
 
     const listData = { user: data.id, msg: data.msg }
-    await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+    const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+    if (isUpdata.matchedCount === 0) {
+      await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
+    }
+
     // 보낸사람 위치가 다르니까 위에처럼 로그 찍어서 변동값이 없으면 배열 바꿔서 업데이트해주는 구조 추가해보자
     let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
     console.log('처음파인드'+resulte);
@@ -174,32 +146,45 @@ io.on('connection', (socket) => {
       resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
       console.log('두번째파인드'+resulte);
     }
-    console.log('이프문밑'+resulte);
+    console.log('이프문밑'+resulte.room);
     const lastChat = resulte.chatList.pop();
     console.log('라스트챗'+lastChat);
 
     // io.to(data.room).emit('throwData', chatData);
     // io.to(data.room).emit('throwChatData', toInChatroom);
     io.emit('update', data.msg);
-    io.emit('updateChatDetail', lastChat);
+    io.to(resulte.room).emit('updateChatDetail', lastChat);
   });
 
+  socket.on('joinRoom', (room) => {
+    console.log('joinRoom'+room);
+    socket.join(room);
+  })
 
+  socket.on('leaveRoom', (room) => {
+    console.log('leaveRoom'+room);
+    socket.leave(room);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
+  });
 });
 
-// 실시간 데이터 x 근데 이거로해야 화면이 안겹침..
+// 이거로해야 화면이 안겹침..
 app.get('/getChatHeaderList', async (req, res) => {
-  // const loginUser = '디디'
+
   const loginUser = req.user.userId;
-  // const loginUser = req.user.userId;
   console.log('채팅'+req.user?.userId);
   const resulte = await db.collection('chat').find({ room: loginUser.toString() }).toArray();
   console.log('resulte'+resulte);
   let chatData = resulte.map(room => {
     let lastChat = room.chatList.pop();
+    console.log(lastChat);
     if (lastChat.user == loginUser) {
       return (
         {
+          room: room.room,
           user: room.user2,
           msg: lastChat.msg
         }
@@ -207,11 +192,11 @@ app.get('/getChatHeaderList', async (req, res) => {
     } else {
       return (
         {
-          user: lastChat.user,
+          room: room.room,
+          user: room.user1,
           msg: lastChat.msg
         }
       )
-
     }
   });
   console.log(chatData);
