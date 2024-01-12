@@ -306,12 +306,12 @@ router.get('/reviewDeleteAll', async (req, res) => {
 // 상품 상세페이지_Q&A 가져오기
 router.get('/qna/:postId', async (req, res) => {
   try {
-    const postId = req.params.postId
+    const postId = req.params.postId;
     const itemQna = await db.collection('qna').find({ postId: postId }).toArray();
     res.json({
       flag: true,
       message: 'Q&N 불러오기 성공',
-      itemQna
+      itemQna,
     });
   } catch (err) {
     console.error(err);
@@ -320,15 +320,17 @@ router.get('/qna/:postId', async (req, res) => {
 
 // 상품 Q&A 작성하기
 router.post('/qna/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const title = req.body.title;
+  const content = req.body.content;
+  const date = req.body.date;
   try {
-    const postId = req.params.postId;
-    const title = req.body.title;
-    const content = req.body.content;
-    const date = req.body.date;
-    await db.collection('qna').insertOne({ date, title, content, postId: postId, status: '답변대기' });
+    const user = req.user._id;
+    const userName = req.user.signUserNicname;
+    await db.collection('qna').insertOne({ date, title, content, postId, user, userName, status: '답변대기' });
     res.json({
       flag: true,
-      message: 'Q&N 등록 완료'
+      message: 'Q&A 등록 완료'
     });
   } catch (err) {
     console.error(err);
