@@ -495,22 +495,23 @@ router.get('/toktok/detail/:postId', async (req, res) => {
 // 커뮤니티 삽입_육아톡톡
 router.post('/toktok/insert', upload.single('imgUrl'), async (req, res) => {
   console.log(req.body);
+  console.log(req.user);
   const mydate = new Date();
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
-  const author = req.body.user.signUserNicname || '';
+  // const author = req.user || '';
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
   const like = [];
   const view = [];
-  const user = req.body.user;
+  const user = req.user || '';
   const date = mydate;
 
   try {
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, like, view, date, user, type: 'toktok' });
+    await db.collection('community').insertOne({ title, content, /* author, */ imgUrl, imgKey, like, view, date, user, type: 'toktok' });
     res.json({
       flag: true,
       message: '데이터 저장 성공(커뮤니티_육아톡톡)',
@@ -612,13 +613,15 @@ router.get('/Toktok/ddd', async (req, res) => { // 톡톡 다 삭제ㅁㅁㅇㄴ
 // 조회수 육아톡톡
 router.post('/toktok/view', async (req, res) => {
   const postId = req.body.postId;
-  const userId = req.body.user;
+  const userId = req.user;
   try {
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거.view?.filter((a) => {
-      return a === new ObjectId(userId._id)
+      console.log((a)); console.log((userId._id));
+      return (a.toString() == userId._id.toString());
     });
-    if (!중복제거필터) {
+    console.log(중복제거필터);
+    if (중복제거필터.length === 0) {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId._id } });
       const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
@@ -635,14 +638,13 @@ router.post('/toktok/view', async (req, res) => {
 // 좋아요 육아톡톢
 router.post('/toktok/like', async (req, res) => {
   const postId = req.body.postId;
-  const userId = req.body.user;
+  const userId = req.user;
   try {
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거?.like.filter((a) => {
-      return a === new ObjectId(userId?._id)
+      return a.toString() === userId?._id.toString()
     });
-    console.log(중복제거필터);
-    if (!중복제거필터) {
+    if (중복제거필터.length === 0) {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId._id } });
       // const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
@@ -651,7 +653,7 @@ router.post('/toktok/like', async (req, res) => {
         // post
       });
     } else {
-      await db.collection('community').deleteOne({ _id: new ObjectId(postId) }, { $push: { like: userId._id } });
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId._id } });
       // const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
         flag: true,
