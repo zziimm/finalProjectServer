@@ -87,9 +87,9 @@ const upload = multer({
 // 모든 커뮤니티 정보
 router.get('/', async (req, res) => {
   try {
-    const bestViewPost = await db.collection('community').find({}).sort({view: -1}).limit(5).toArray();
-    const recentPost = await db.collection('community').find({type: 'talk'}).sort({_id: -1}).limit(5).toArray();
-    const recentExchange = await db.collection('exchange').find({}).sort({_id: -1}).limit(10).toArray();
+    const bestViewPost = await db.collection('community').find({}).sort({ view: -1 }).limit(5).toArray();
+    const recentPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
+    const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(10).toArray();
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
@@ -249,7 +249,7 @@ router.post('/daily/insert', async (req, res) => {
     imgUrl = imgUrl.filter(url => content.includes(url));
     imgKey = imgKey.filter(key => content.includes(key));
   }
-
+  
   try {
     await db.collection('community').insertOne({ 
       id, 
@@ -522,6 +522,8 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   const author = req.body.author;
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
+  const like = req.body.like;
+  const view = req.body.view;
 
   // aws에서 데이터 삭제
   const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
@@ -570,10 +572,6 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
 //   }
 // });
 
-
-
-
-
 // 테스트 더미---- 
 router.get('/test', async (req, res) => {
   const post = await db.collection('community').findOne({ title: '123' });
@@ -583,7 +581,7 @@ router.get('/test', async (req, res) => {
 router.post('/test/like', async (req, res) => {
   const id = '더미'
   const thisPost = await db.collection('community').findOne({ title: '123' });
-  
+
   try {
     if (thisPost.like?.find(liked => liked === id)) {
       throw new Error('이미 좋아요 누름')
@@ -594,7 +592,7 @@ router.post('/test/like', async (req, res) => {
         message: '성공'
       })
     }
-    
+
   } catch (err) {
     console.error(err);
     res.json({
@@ -609,9 +607,9 @@ router.post('/test/like', async (req, res) => {
 
 
 // 육아톡톡 커뮤니티
-router.get('/talk', async (req, res) => {
+router.get('/toktok', async (req, res) => {
   try {
-    const data = await db.collection('community').find({ type: 'talk' }).toArray();
+    const data = await db.collection('community').find({ type: 'toktok' }).toArray();
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(육아톡톡)',
@@ -623,7 +621,7 @@ router.get('/talk', async (req, res) => {
 });
 
 // 육아톡톡 상세페이지
-router.get('/talk/detail/:postId', async (req, res) => {
+router.get('/toktok/detail/:postId', async (req, res) => {
   const postId = req.params.postId
   const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
   // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
@@ -638,21 +636,26 @@ router.get('/talk/detail/:postId', async (req, res) => {
 });
 
 // 커뮤니티 삽입_육아톡톡
-router.post('/talk/insert', upload.single('img'), async (req, res) => {
+router.post('/toktok/insert', upload.single('imgUrl'), async (req, res) => {
+  const mydate = new Date();
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const title = req.body.title;
   const content = req.body.content;
-  const author = req.body.author;
+  const author = req.body.author || '';
   const imgUrl = req.file?.location || '';
   const imgKey = req.file?.key || '';
+  const like = req.body.like;
+  const view = req.body.view;
+  const user = req.body.user;
+  const date = mydate;
 
   try {
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
-    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, type: 'talk'});
+    await db.collection('community').insertOne({ title, content, author, imgUrl, imgKey, like, view, date, user, type: 'toktok' });
     res.json({
       flag: true,
-      message: '데이터 저장 성공(커뮤니티_육아톡톡)'
+      message: '데이터 저장 성공(커뮤니티_육아톡톡)',
     });
   } catch (err) {
     console.error(err);
@@ -660,7 +663,7 @@ router.post('/talk/insert', upload.single('img'), async (req, res) => {
 });
 
 // 수정 (이미지)_육아톡톡
-router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
+router.patch('/toktok/edit/:postId', upload.single('img'), async (req, res) => {
   const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
   console.log(req.file);
   const title = req.body.title;
@@ -693,7 +696,7 @@ router.patch('/talk/edit/:postId', upload.single('img'), async (req, res) => {
 });
 
 // 삭제_육아톡톡
-router.delete('/talk/delete/:postId', async (req, res) => {
+router.delete('/toktok/delete/:postId', async (req, res) => {
   const postId = req.params.postId;
   try {
     const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
@@ -718,20 +721,22 @@ router.delete('/talk/delete/:postId', async (req, res) => {
 });
 
 // 댓글달기_육아톡톡
-router.post('/talk/comment/:postId', async (req, res) => {
+router.post('/toktok/comment/:postId', async (req, res) => {
+  const mydate = new Date();
   const postId = req.params.postId;
-  const user = req.user._id;
-  const userId = req.user.userId;
+  const user = req.body.user;
+  // const user = req.user._id;
+  // const userId = req.user.userId;
   const comment = req.body.comment;
-  const date = req.body.date;
+  const date = mydate;
   try {
     await db.collection('comment').insertOne({
       user,
-      userId,
+      // userId,
       comment,
       date,
       postId: new ObjectId(postId),
-      type: 'talk'
+      type: 'toktok'
     });
     res.json({
       flag: true,
@@ -742,13 +747,39 @@ router.post('/talk/comment/:postId', async (req, res) => {
   }
 });
 
+router.get('/Toktok/ddd', async (req, res) => { // 톡톡 다 삭제ㅁㅁㅇㄴㅇㄴㅁㅇ???????????????이건 왜 안되니
+  await db.collection('community').deleteMany({ type: "toktok" });
+});
+
+// 조회수 육아톡톡 ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd
+router.post('/toktok/view', async (req, res) => {
+  // const postId = req.params.postId;
+  console.log(req.body);
+  const postId = req.body.postId;
+  const userId = req.body._id;
+  console.log(req.body.user);
+  try {
+    // const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    // thisPost.like?.find();
+    await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId._id } });
+    const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    res.json({
+      flag: true,
+      message: '성공',
+      post
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
 // 좋아요_+_육아톡톡
-router.post('/talk/like', async (req, res) => {
+router.post('/toktok/like', async (req, res) => {
   // const postId = req.params.postId;
   const postId = req.body.postId;
   const userId = req.user.userId;
   try {
-    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId)});
+    const thisPost = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     thisPost.like?.find();
     await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId } });
     const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
@@ -762,7 +793,7 @@ router.post('/talk/like', async (req, res) => {
   }
 });
 // 좋아요_-_육아톡톡
-router.post('/talk/dislike', async (req, res) => {
+router.post('/toktok/dislike', async (req, res) => {
   // const postId = req.params.postId;
   const postId = req.body.postId;
   const userId = req.user.userId;
