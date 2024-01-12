@@ -1,5 +1,5 @@
 const express = require('express');
-const { ObjectId } = require('mongodb');
+const { ObjectId, Long } = require('mongodb');
 
 // S3
 const multer = require('multer');
@@ -225,9 +225,31 @@ router.post('/daily/insert', async (req, res) => {
 
   const { id, title, content, author, authorId, date } = req.body
 
-  const imgUrl = req.body.imgUrl || '';
-  const imgKey = req.body.imgKey || '';
+  let imgUrl = req.body.imgUrl || '';
+  let imgKey = req.body.imgKey || '';
   
+  // s3_delete
+  if (imgKey) {
+    const deleteImgKey = imgKey.filter(key => !content.includes(key));
+
+    deleteImgKey.forEach(image => {
+      const bucketParams = { Bucket: 'finaltp', Key: image };
+
+      const run = async () => {
+        try {
+          const data = await s3.send(new DeleteObjectCommand(bucketParams))
+          console.log('성공', data);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      run();
+    });
+
+    imgUrl = imgUrl.filter(url => content.includes(url));
+    imgKey = imgKey.filter(key => content.includes(key));
+  }
+
   try {
     await db.collection('community').insertOne({ 
       id, 
@@ -265,6 +287,41 @@ router.post('/daily/insert/image', upload.single('img'), async (req, res) => {
   });
 });
 
+// DailyDog_Delete
+router.delete('/daily/delete/:id', async (req, res) => {
+  try {
+    const data = await db.collection('community').findOne({ id: Number(req.params.id) });
+
+    const deleteImgKey = data.imgKey;
+    
+    // s3_delete
+    if (deleteImgKey) {
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+    }
+
+  await db.collection('community').deleteOne({ id: Number(req.params.id) });
+  res.json({
+    flag: true,
+    message: '데이터 삭제 성공'
+  });
+  } catch (err) {
+    console.error(err);
+  }
+}); 
+
 // DailyDog_Edit_List
 router.get('/daily/edit/:postId', async (req, res) => {
   try {
@@ -284,34 +341,33 @@ router.patch('/daily/edit/:postId', async (req, res) => {
   try {
     const { title, content } = req.body
 
-    const imgUrl = req.body.imgUrl || '';
-    const imgKey = req.body.imgKey || '';
+    let imgUrl = req.body.imgUrl || '';
+    let imgKey = req.body.imgKey || '';
 
+    // s3_delete 
     if (imgKey) {
-      const prevImage = db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
-  
-      const extractImages = (images) => images.map(item => item.imgKey);
+      const prevImageItem = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
+      const prevImages = prevImageItem.imgKey.map(key => { return key });
+      
+      imgUrl = imgUrl.filter(url => content.includes(url));
+      imgKey = imgKey.filter(key => content.includes(key));
+      
+      const deleteImgKey = prevImages.filter(key => !imgKey.includes(key));
 
-      imgKey
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
 
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
     }
-
-    console.log(imgKey);
-    // imgKey 배열로 옴, 기존 있는 imgKey 와 검사하여 없는 값은 지워주자!
-    // if (!imgKey) {
-    //   const thisPost = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
-
-    //   const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
-    //   const run = async () => {
-    //     try {
-    //       const data = await s3.send(new DeleteObjectCommand(bucketParams))
-    //       console.log('성공', data);
-    //     } catch (err) {
-    //       console.error(err);
-    //     }
-    //   };
-    //   run();
-    // }
 
     await db.collection('community').updateOne({
       _id: new ObjectId(req.params.postId) 
@@ -402,9 +458,9 @@ router.patch('/daily/likedown/:type', async (req, res) => {
 });
 
 // DailyDog_Comment_List
-router.get('/daily/comment', async (req, res) => {
+router.get('/daily/comment/:postId', async (req, res) => {
   try {
-    const commentList = await db.collection('comment').find({ postId: new ObjectId(req.query.postId) }).toArray();
+    const commentList = await db.collection('comment').find({ postId: new ObjectId(req.params.postId) }).toArray();
     res.json(commentList)  
   } catch (err) {
     console.error(err);
@@ -432,6 +488,20 @@ router.post('/daily/comment/insert', async (req, res) => {
     console.error(err);
   }
 });
+
+// DailyDog_Comment_Delete
+router.delete('/daily/comment/delete/:id', async (req, res) => {
+  try {
+    await db.collection('comment').deleteOne({ _id: new ObjectId(req.params.id) });
+
+    res.json({
+      flag: true,
+      message: '댓글 삭제 성공'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}); 
 
 
 
@@ -476,29 +546,29 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   }
 });
 // 삭제_데일리톡(일상)
-router.delete('/daily/delete/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  try {
-    const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
-    const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
-    const run = async () => {
-      try {
-        const data = await s3.send(new DeleteObjectCommand(bucketParams))
-        console.log('성공', data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    await db.collection('community').deleteOne({ _id: new ObjectId(postId) });
-    run();
-    res.json({
-      flag: true,
-      message: '데이터를 성공적으로 지웠습니다.'
-    });
-  } catch (err) {
-    console.error(err);
-  }
-});
+// router.delete('/daily/delete/:postId', async (req, res) => {
+//   const postId = req.params.postId;
+//   try {
+//     const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
+//     const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
+//     const run = async () => {
+//       try {
+//         const data = await s3.send(new DeleteObjectCommand(bucketParams))
+//         console.log('성공', data);
+//       } catch (err) {
+//         console.error(err);
+//       }
+//     };
+//     await db.collection('community').deleteOne({ _id: new ObjectId(postId) });
+//     run();
+//     res.json({
+//       flag: true,
+//       message: '데이터를 성공적으로 지웠습니다.'
+//     });
+//   } catch (err) {
+//     console.error(err);
+//   }
+// });
 
 
 
