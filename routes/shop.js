@@ -352,14 +352,16 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
 });
 
 // 구매 완료된 목록 주기
-router.post('/purchase', async (req, res) => {
+router.get('/purchase/:id', async (req, res) => {
   try {
-    const userId = req.body.userId;
-    const list = await db.collection('purchase').find({ userId: new ObjectId(userId) }).toArray();
+    const id = req.params.id;
+    console.log(id);
+    const lists = await db.collection('purchase').find({ user: new ObjectId(id) }).toArray();
+    // console.log(lists);
     res.json({
       flag: true,
       message: '구매 목록 불러오기 성공',
-      list
+      list: lists
     });
   } catch (err) {
     console.error(err);
