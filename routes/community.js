@@ -606,10 +606,6 @@ router.post('/toktok/comment/:postId', async (req, res) => {
   }
 });
 
-router.get('/Toktok/ddd', async (req, res) => { // 톡톡 다 삭제ㅁㅁㅇㄴㅇㄴㅁㅇ???????????????이건 왜 안되니
-  await db.collection('community').deleteMany({ type: "toktok" });
-});
-
 // 조회수 육아톡톡
 router.post('/toktok/view', async (req, res) => {
   const postId = req.body.postId;
@@ -650,6 +646,7 @@ router.post('/toktok/like', async (req, res) => {
       res.json({
         flag: true,
         message: '성공',
+        data:중복제거
         // post
       });
     } else {
@@ -658,6 +655,7 @@ router.post('/toktok/like', async (req, res) => {
       res.json({
         flag: true,
         message: '취소성공',
+        data:중복제거
         // post
       });
     }
