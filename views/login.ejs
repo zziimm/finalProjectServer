@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body class="grey-bg">
+
+  <form id="login-form" class="form-box" action="/user/login" method="post">
+    <h4>로그인</h4>
+    <!-- passport 사용 시 name 속성값 맞춰줘야 정상 동작함
+      passport 사용 기본값: username, password -->
+    <label for="userId">ID</label>
+    <input type="text" id="userId" name="userId">
+    <label for="passwd">PW</label>
+    <input type="passwd" id="passwd" name="passwd">
+    <button type="submit">로그인</button>
+  </form>
+
+  <!-- <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script src="/js/login.js"></script> -->
+</body>
+
+</html>
