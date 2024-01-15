@@ -170,14 +170,15 @@ router.post('/register', async (req, res) => {
 
     res.json({
       flag: true,
-      message: '회원 가입 성공'
+      message: '회원 가입 성공',
+
     })
 
   } catch (error) {
     console.error(error);
     res.json({
       flag: false,
-      message: error.message
+      message: error.message,
     })
   }
 })
@@ -206,15 +207,15 @@ router.get('/login', async (req, res) => {
 })
 
 
-
+// 로그인
 router.post('/login', (req, res, next) => {
 
   passport.authenticate('local', (authError, user, info) => {
     if (authError) {
-      return res.status(500).json(authError)
+      return res.json(authError)
     }
     if (!user) {
-      return res.status(401).json(info.message)
+      return res.json(info.message)
     }
 
     req.login(user, (loginError) => {
@@ -269,7 +270,7 @@ router.post('/editPersonalInfo', async (req, res) => {
 
     await db.collection('userInfo').updateOne({
       _id: new ObjectId(req.user._id)
-    },{
+    }, {
       // nick, 회원가입할 때 있는지 확인
       dogType,
       dogAge,

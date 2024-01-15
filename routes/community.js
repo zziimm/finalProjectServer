@@ -464,7 +464,7 @@ router.post('/test/like', async (req, res) => {
 // 퍼스널독 페이지
 router.get('/toktok/PersonalDog', async (req, res) => {
   console.log(req.user);
-  const {signDogType, signDogAge, signDogWeight} = (req.user)
+  const { signDogType, signDogAge, signDogWeight } = req.user;
   const toktokPost = await db.collection('community').find({ type: "toktok" }).toArray();
   const dailyPost = await db.collection('community').find({ type: "daily" }).toArray();
   const shopPost = await db.collection('community').find({ type: "daily" }).toArray();
@@ -660,12 +660,11 @@ router.post('/toktok/view', async (req, res) => {
   try {
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거.view?.filter((a) => {
-      console.log((a)); console.log((userId._id));
-      return (a.toString() == userId._id.toString());
+      return (a?.toString() == userId?._id.toString());
     });
     console.log(중복제거필터);
     if (중복제거필터.length === 0) {
-      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId._id } });
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { view: userId?._id } });
       const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
         flag: true,
@@ -688,21 +687,21 @@ router.post('/toktok/like', async (req, res) => {
       return a.toString() === userId?._id.toString()
     });
     if (중복제거필터.length === 0) {
-      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId._id } });
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId?._id } });
       const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
         flag: true,
         message: '성공',
-        data:post
+        data: post
         // post
       });
     } else {
-      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId._id } });
+      await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $pull: { like: userId?._id } });
       const post = await db.collection('community').findOne({ _id: new ObjectId(postId) });
       res.json({
         flag: true,
         message: '취소성공',
-        data:post
+        data: post
         // post
       });
     }
