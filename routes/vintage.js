@@ -44,66 +44,138 @@ const upload = multer({
 
 
 
-// 중고커뮤
+// Fleamarket_List
 router.get('/', async (req, res) => {
-  const postsPerPage = 5; // 페이지 당 콘텐츠 개수
-  const currentPage = req.query.page || 1; // 현재 페이지
+  try {
+    let posts = await db.collection('vincommunity').find({}).sort({ _id: -1 }).toArray();
+    
+    if (req.query.select) {
+      const { dogType, category, area, price, view } = req.query.select;
   
-  // const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
-  const posts = await db.collection('vincommunity').find({}).toArray();
-  // console.log(posts);
-  const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
-  const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
-  // res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
-  res.json(posts);
+      if (dogType) {
+        posts = await db.collection('vincommunity').find({ dogType }).toArray();
+      }
+      if (category) {
+        posts = await db.collection('vincommunity').find({ category }).toArray();
+      }
+      if (area) {
+        posts = await db.collection('vincommunity').find({ area }).toArray();
+      }
+      if (price === 'min') {
+        posts = posts.sort((a, b) => { return b.price - a.price });
+      } else {
+        posts = posts.sort((a, b) => { return a.price - b.price });
+      }
+      if (view === 'min') {
+        posts = posts.sort((a, b) => { return b.view - a.view });
+      } else {
+        posts = posts.sort((a, b) => { return a.view - b.view });
+      }
+    }
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공',
+      posts
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// Fleamarket_List_Number
+router.get('/number', async (req, res) => {
+  try {
+    const data = await db.collection('vincommunity').find({}).sort({ _id: -1 }).skip(0).limit(1).toArray();
+    res.json({
+      flag: true,
+      id: Number(data[0].id)
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 router.get('/detail/:postId', async (req, res) => {
-  const postId = req.params.postId
-  const posts = await db.collection('vincommunity').findOne({ _id: new ObjectId(postId)})
-
-  // 조회수
-  const views = await db.collection('vincommunity').updateOne({ _id: new ObjectId(postId) }, { $inc: { views: 1 }  })
-  // console.log(views);
-    res.render('vintage', { posts, views, user:req.user });
-
+  console.log(typeof(req.params.postId));
+  const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
+  console.log(postData);
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
-    posts,
-    views
-  })
-})
+    postData,
+  });
+});
+
+// router.get('/detail/:postId', async (req, res) => {
+//   const postId = req.params.postId
+//   const posts = await db.collection('vincommunity').findOne({ _id: new ObjectId(postId)})
+
+//   // 조회수
+//   const views = await db.collection('vincommunity').updateOne({ _id: new ObjectId(postId) }, { $inc: { views: 1 }  })
+//   // console.log(views);
+//     res.render('vintage', { posts, views, user:req.user });
+
+//   res.json({
+//     flag: true,
+//     message: '데이터 불러오기 성공(상세보기)',
+//     posts,
+//     views
+//   })
+// })
 
 router.get('/insert', (req, res) => {
   res.render('insert.ejs');
 });
 
-// 커뮤니티 삽입_중고
+// Fleamarket_Write
 router.post('/insert', upload.array('img'), async (req, res) => {
-  const { id, title, content, price, category } = req.body;
-  // const user = req.user.userId
-  // console.log(user);
-  // const dog = req.user.dogSpecies
-  const imgUrl = req.files.map(url => url.location) || '';
-  const imgKey = req.files.map(url => url.key) || '';
-
-  
   try {
+    const { id, title, content, price, category, dogAge, dogWeight, dogType, author, authorId, area, date } = req.body;
+
+    const imgUrl = req.files.map(url => url.location) || '';
+    const imgKey = req.files.map(url => url.key) || '';
+
     const data = await db.collection('vincommunity').insertOne({
-    title, content, price, category, imgUrl, imgKey, user:req.user, id
+      id: Number(id), 
+      title, 
+      content,
+      price: Number(price), 
+      category, 
+      imgUrl, 
+      imgKey, 
+      dogAge,
+      dogType,
+      dogWeight, 
+      author, 
+      authorId: new ObjectId(authorId),
+      area,
+      date,
+      chat: [],
+      view: 0, 
+      user:req.user
     })
     res.json({
       flag: true,
-      message: '데이터 저장 성공(커뮤니티_중고)',
+      message: '데이터 저장 성공',
       data
       })
-
   } catch (err) {
     console.error(err);
   }
 })
 
+// Fleamarket_View
+router.patch('/view/:id', async (req, res) => {
+  try {
+    await db.collection('vincommunity').updateOne({ _id: new ObjectId(req.params.id)}, { $inc: { view: 1 }});
+    res.json({
+      flag: true,
+      message: '조회수 증가'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
 
 
 // 수정 (이미지)_중고

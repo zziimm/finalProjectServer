@@ -222,35 +222,34 @@ router.get('/daily/detail/:postId', async (req, res) => {
 
 // DailyDog_Write
 router.post('/daily/insert', async (req, res) => {
-
-  const { id, title, content, author, authorId, date } = req.body
-
-  let imgUrl = req.body.imgUrl || '';
-  let imgKey = req.body.imgKey || '';
-  
-  // s3_delete
-  if (imgKey) {
-    const deleteImgKey = imgKey.filter(key => !content.includes(key));
-
-    deleteImgKey.forEach(image => {
-      const bucketParams = { Bucket: 'finaltp', Key: image };
-
-      const run = async () => {
-        try {
-          const data = await s3.send(new DeleteObjectCommand(bucketParams))
-          console.log('성공', data);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      run();
-    });
-
-    imgUrl = imgUrl.filter(url => content.includes(url));
-    imgKey = imgKey.filter(key => content.includes(key));
-  }
-  
   try {
+    const { id, title, content, author, authorId, date } = req.body
+
+    let imgUrl = req.body.imgUrl || '';
+    let imgKey = req.body.imgKey || '';
+    
+    // s3_delete
+    if (imgKey) {
+      const deleteImgKey = imgKey.filter(key => !content.includes(key));
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+
+      imgUrl = imgUrl.filter(url => content.includes(url));
+      imgKey = imgKey.filter(key => content.includes(key));
+    }
+  
     await db.collection('community').insertOne({ 
       id, 
       title, 
@@ -321,7 +320,7 @@ router.delete('/daily/delete/:id', async (req, res) => {
     console.error(err);
   }
 }); 
-// 123
+
 // DailyDog_Edit_List
 router.get('/daily/edit/:postId', async (req, res) => {
   try {
