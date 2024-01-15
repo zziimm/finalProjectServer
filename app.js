@@ -39,7 +39,7 @@ const vintageCommunityRouter = require('./routes/vintage');
 const { ObjectId } = require('mongodb');
 app.set('port', process.env.PORT || 8088);
 
- 
+
 passportConfig();
 connect();
 app.set('view engine', 'ejs'); 
@@ -89,15 +89,12 @@ app.use('/vintage', vintageCommunityRouter);
 
 // socket 테스트
 app.get('/socket', async (req, res) => {
-  // await db.collection('chat').find({});
   res.render('socket.ejs');
 });
 
 // socket
 io.on('connection', (socket) => {
   console.log(io.httpServer._connections);
-  // if (io.httpServer._connections !== 1) {
-  // }
 
   // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
@@ -113,16 +110,12 @@ io.on('connection', (socket) => {
     // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
     console.log(data);
     const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
-    console.log('1파인드');
     if (!findChat) {
       const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
-      console.log('2파인드');
       if (!findChatDetail) {
         await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
-        console.log('방개설');
       }
     }
-    console.log('이프아래');
 
     const listData = { user: data.id, msg: data.msg }
     const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
@@ -130,21 +123,16 @@ io.on('connection', (socket) => {
       await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
     }
 
-    // 보낸사람 위치가 다르니까 위에처럼 로그 찍어서 변동값이 없으면 배열 바꿔서 업데이트해주는 구조 추가해보자
     let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
-    console.log('처음파인드'+resulte);
     if (!resulte?.user1) {
       resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
-      console.log('두번째파인드'+resulte);
     }
-    console.log('이프문밑'+resulte.room);
     const lastChat = resulte.chatList.pop();
-    console.log('라스트챗'+lastChat);
+    const lastChatRoom = resulte.room;
+    const chatDataInRoom = { lastChat, lastChatRoom }
 
-    // io.to(data.room).emit('throwData', chatData);
-    // io.to(data.room).emit('throwChatData', toInChatroom);
     io.emit('update', data.msg);
-    io.to(resulte.room).emit('updateChatDetail', lastChat);
+    io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
   });
 
   socket.on('joinRoom', (room) => {
@@ -164,37 +152,47 @@ io.on('connection', (socket) => {
 
 // 이거로해야 화면이 안겹침..
 app.get('/getChatHeaderList', async (req, res) => {
-
-  const loginUser = req.user.userId;
-  console.log('채팅'+req.user?.userId);
-  const resulte = await db.collection('chat').find({ room: loginUser.toString() }).toArray();
-  console.log('resulte'+resulte);
-  let chatData = resulte.map(room => {
-    let lastChat = room.chatList.pop();
-    console.log(lastChat);
-    if (lastChat.user == loginUser) {
-      return (
-        {
-          room: room.room,
-          user: room.user2,
-          msg: lastChat.msg
-        }
-      )
-    } else {
-      return (
-        {
-          room: room.room,
-          user: room.user1,
-          msg: lastChat.msg
-        }
-      )
+  try {
+    if (!req.user) {
+      throw new Error('로그인을 해주세요!');
     }
-  });
-  console.log(chatData);
-  res.json({
-    flag: true,
-    chatData
-  });
+    const loginUser = req.user.userId;
+    const resulte = await db.collection('chat').find({ room: loginUser.toString() }).toArray();
+    console.log('resulte'+resulte);
+    let chatData = resulte.map(room => {
+      let lastChat = room.chatList.pop();
+      console.log(lastChat);
+      if (room.user1 == loginUser) {
+        return (
+          {
+            room: room.room,
+            user: room.user2,
+            msg: lastChat.msg
+          }
+        )
+      } else {
+        return (
+          {
+            room: room.room,
+            user: room.user1,
+            msg: lastChat.msg
+          }
+        )
+      }
+    });
+    console.log(chatData);
+    res.json({
+      flag: true,
+      chatData
+    });
+    
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
 });
 
 // app.get('/getChatting/:id', async (req, res) => {
