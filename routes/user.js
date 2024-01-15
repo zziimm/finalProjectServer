@@ -252,10 +252,25 @@ router.get('/logout', (req, res, next) => {
   })
 })
 
+// 유저 정보 주기(마이페이지)
+router.get('/getUserInfo', async (req, res) => {
+  const user = req.user._id;
+  try {
+    const result = await db.collection('userInfo').findOne( {_id: user });
+    console.log(result);
+    res.json({
+      flag: true,
+      result,
+    })
+  } catch (error) {
+    console.error(error);
+  }
+});
+
 // 유저 정보 변경
 router.post('/editPersonalInfo', async (req, res) => {
-  const { nick, dogType, dogName, dogAge } = req.body
-  const id = req.user._id;
+  const { nick, dogType, dogName, dogAge } = req.body;
+  const user = req.user._id;
   try {
     if (nick === '') {
       throw new Error('닉네임을 입력해주세요!');
@@ -267,17 +282,18 @@ router.post('/editPersonalInfo', async (req, res) => {
       throw new Error('강아지 나이를 입력해주세요!');
     }
 
-    await db.collection('userInfo').updateOne({
-      _id: new ObjectId(req.user._id)
-    },{
-      // nick, 회원가입할 때 있는지 확인
-      dogType,
-      dogAge,
-      dogName,
-    })
+    await db.collection('userInfo').updateOne({ _id: user },{ $set: {
+      signUserNicname: nick,
+      signDogType: dogType,
+      signDogAge: dogAge,
+      signDogName: dogName,
+    }
+    });
+    const result = await db.collection('userInfo').findOne({ _id: user });
     res.json({
       flag: true,
-      message: '회원 정보 수정 성공'
+      message: '회원 정보 수정 성공',
+      result
     })
   } catch (error) {
     console.error(error);
@@ -292,7 +308,7 @@ router.post('/editPersonalInfo', async (req, res) => {
 router.get('/accoutQuit', async (req, res) => {
   try {
     await db.collection('userInfo').deleteOne({
-      _id: new ObjectId(req.user._id)
+      _id: req.user._id
     });
     res.json({
       flag: true,
