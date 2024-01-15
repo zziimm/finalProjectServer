@@ -106,34 +106,38 @@ io.on('connection', (socket) => {
   
 
   // 실사용
-  socket.on('answer', async (data) => {
-    // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
-    console.log(data);
-    const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
-    if (!findChat) {
-      const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
-      if (!findChatDetail) {
-        await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
-      }
-    }
+  // socket.on('answer', async (data) => {
+  //   // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
+  //   console.log(data);
+  //   const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
+  //   if (!findChat) {
+  //     const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
+  //     if (!findChatDetail) {
+  //       await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
+  //     }
+  //   }
 
-    const listData = { user: data.id, msg: data.msg }
-    const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
-    if (isUpdata.matchedCount === 0) {
-      await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
-    }
+  //   const listData = { user: data.id, msg: data.msg }
+  //   const isUpdate = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+  //   if (isUpdate.matchedCount === 0) {
+  //     await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
+  //   }
 
-    let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
-    if (!resulte?.user1) {
-      resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
-    }
-    const lastChat = resulte.chatList.pop();
-    const lastChatRoom = resulte.room;
-    const chatDataInRoom = { lastChat, lastChatRoom }
+  //   let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
+  //   if (!resulte?.user1) {
+  //     resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
+  //   }
+  //   const lastChat = resulte.chatList.pop();
+  //   const lastChatRoom = resulte.room;
+  //   const chatDataInRoom = { lastChat, lastChatRoom }
 
-    io.emit('update', data.msg);
-    io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
-  });
+  //   // io.emit('update', data.msg);
+  //   if (lastChatRoom == [ data.id, data.user2 ]) {
+  //     io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
+  //   } else if (lastChatRoom == [ data.user2, data.id ]) {
+  //     io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
+  //   }
+  // });
 
   socket.on('joinRoom', (room) => {
     console.log('joinRoom'+room);
@@ -219,6 +223,46 @@ app.get('/getChatting', async (req, res) => {
     resulte
   }) 
 });
+
+// 채팅중
+app.post(`/inChating`, async (req, res) => {
+  const loginUser = req.user.userId;
+  console.log('inChating'+req.body.data.room);
+  console.log('inChating'+req.body.data.user2);
+  const findChat = await db.collection('chat').findOne({ room: [req.body.data.room, req.body.data.user2] });
+  if (!findChat) {
+    const findChatDetail = await db.collection('chat').findOne({ room: [req.body.data.user2, req.body.data.room] });
+    if (!findChatDetail) {
+      await db.collection('chat').insertOne({ room: [req.body.data.room, req.body.data.user2], user1: req.body.data.room, user2: req.body.data.user2 });
+    }
+  }
+
+  const listData = { user: req.body.data.id, msg: req.body.data.msg }
+  const isUpdate = await db.collection('chat').updateOne({user1: req.body.data.id, user2: req.body.data.user2}, { $push: { chatList: {...listData} } });
+  if (isUpdate.matchedCount === 0) {
+    await db.collection('chat').updateOne({user1: req.body.data.user2, user2: req.body.data.id}, { $push: { chatList: {...listData} } });
+  }
+
+  let resulte = await db.collection('chat').findOne({ room: [req.body.data.id, req.body.data.user2] });
+  if (!resulte?.user1) {
+    resulte = await db.collection('chat').findOne({ room: [req.body.data.user2, req.body.data.id] });
+  }
+  const lastChat = resulte.chatList.pop();
+  const lastChatRoom = resulte.room;
+
+  io.emit('update', req.body.data.msg);
+  console.log(lastChatRoom);
+  console.log(loginUser.toString());
+  console.log(req.body.data.user2.toString());
+  if (lastChatRoom.find(user => user == loginUser.toString()) && lastChatRoom.find(user => user == req.body.data.user2.toString())) {
+    io.to(resulte.room).emit('updateChatDetail', lastChat);
+    console.log('이프실행');
+  }
+  res.json({
+    flag: true,
+    message: '성공'
+  });
+})
 
 
 app.use((req, res, next) => {
