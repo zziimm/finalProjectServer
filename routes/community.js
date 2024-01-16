@@ -465,18 +465,35 @@ router.post('/test/like', async (req, res) => {
 router.get('/toktok/PersonalDog', async (req, res) => {
   console.log(req.user);
   const { signDogType, signDogAge, signDogWeight } = req.user;
-  const toktokPost = await db.collection('community').find({ type: "toktok" }).toArray();
-  const dailyPost = await db.collection('community').find({ type: "daily" }).toArray();
-  const shopPost = await db.collection('community').find({ type: "daily" }).toArray();
+  try {
+    const toktokPost = await db.collection('community').find({ type: "toktok" }).toArray();
+    // console.log(toktokPost);
+    const vinPost = await db.collection('vincommunity').find({}).toArray();
+    // console.log(vinPost);
+    const shopPost = await db.collection('shop').find({}).toArray();
+    // console.log(shopPost);
+
+    const toktokPostFilter = toktokPost.filter((toktokPostFilter) => {
+      return (toktokPostFilter.user.signDogType === signDogType);
+    });
+    const vinPostFilter = vinPost.filter((vinPostFilter) => {
+      return (vinPostFilter.dogAge === signDogAge);
+    });
+    const shopPostFilter = shopPost.filter((shopPostFilter) => {
+      return (shopPostFilter.size === 'big')
+    })
+
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공(상세보기)',
+      toktokPostFilter,
+      vinPostFilter,
+      shopPostFilter
+    });
+  } catch (error) {
+    console.error(error);
+  }
   // const postData = await db.collection('community').findOne({ type: "daily" });
-  res.json({
-    flag: true,
-    message: '데이터 불러오기 성공(상세보기)',
-    // dailyPost,
-    toktokPost,
-    dailyPost,
-    shopPost
-  });
 });
 
 // 육아톡톡 커뮤니티
