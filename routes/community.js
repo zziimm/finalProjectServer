@@ -88,14 +88,17 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const bestViewPost = await db.collection('community').find({}).sort({ view: -1 }).limit(5).toArray();
-    const recentPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
-    const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(10).toArray();
+    const recentDailyPost = await db.collection('community').find({ type: 'daily' }).sort({ id: -1 }).limit(5).toArray();
+    const recentToktokPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
+    // const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(5).toArray();
+  
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
       bestViewPost,
-      recentPost,
-      recentExchange
+      recentDailyPost,
+      recentToktokPost,
+      // recentExchange
     });
   } catch (err) {
     console.error(err);
@@ -222,35 +225,34 @@ router.get('/daily/detail/:postId', async (req, res) => {
 
 // DailyDog_Write
 router.post('/daily/insert', async (req, res) => {
-
-  const { id, title, content, author, authorId, date } = req.body
-
-  let imgUrl = req.body.imgUrl || '';
-  let imgKey = req.body.imgKey || '';
-  
-  // s3_delete
-  if (imgKey) {
-    const deleteImgKey = imgKey.filter(key => !content.includes(key));
-
-    deleteImgKey.forEach(image => {
-      const bucketParams = { Bucket: 'finaltp', Key: image };
-
-      const run = async () => {
-        try {
-          const data = await s3.send(new DeleteObjectCommand(bucketParams))
-          console.log('성공', data);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      run();
-    });
-
-    imgUrl = imgUrl.filter(url => content.includes(url));
-    imgKey = imgKey.filter(key => content.includes(key));
-  }
-  
   try {
+    const { id, title, content, author, authorId, date } = req.body
+
+    let imgUrl = req.body.imgUrl || '';
+    let imgKey = req.body.imgKey || '';
+    
+    // s3_delete
+    if (imgKey) {
+      const deleteImgKey = imgKey.filter(key => !content.includes(key));
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+
+      imgUrl = imgUrl.filter(url => content.includes(url));
+      imgKey = imgKey.filter(key => content.includes(key));
+    }
+  
     await db.collection('community').insertOne({ 
       id, 
       title, 
