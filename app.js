@@ -87,11 +87,6 @@ app.use('/shop', shopRouter);
 app.use('/community', communityRouter)
 app.use('/vintage', vintageCommunityRouter);
 
-// socket 테스트
-app.get('/socket', async (req, res) => {
-  res.render('socket.ejs');
-});
-
 // socket
 io.on('connection', (socket) => {
   console.log(io.httpServer._connections);
@@ -106,34 +101,34 @@ io.on('connection', (socket) => {
   
 
   // 실사용
-  socket.on('answer', async (data) => {
-    // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
-    console.log(data);
-    const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
-    if (!findChat) {
-      const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
-      if (!findChatDetail) {
-        await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
-      }
-    }
+  // socket.on('answer', async (data) => {
+  //   // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
+  //   console.log(data);
+  //   const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
+  //   if (!findChat) {
+  //     const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
+  //     if (!findChatDetail) {
+  //       await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
+  //     }
+  //   }
 
-    const listData = { user: data.id, msg: data.msg }
-    const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
-    if (isUpdata.matchedCount === 0) {
-      await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
-    }
+  //   const listData = { user: data.id, msg: data.msg }
+  //   const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+  //   if (isUpdata.matchedCount === 0) {
+  //     await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
+  //   }
 
-    let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
-    if (!resulte?.user1) {
-      resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
-    }
-    const lastChat = resulte.chatList.pop();
-    const lastChatRoom = resulte.room;
-    const chatDataInRoom = { lastChat, lastChatRoom }
+  //   let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
+  //   if (!resulte?.user1) {
+  //     resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
+  //   }
+  //   const lastChat = resulte.chatList.pop();
+  //   const lastChatRoom = resulte.room;
+  //   const chatDataInRoom = { lastChat, lastChatRoom }
 
-    io.emit('update', data.msg);
-    io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
-  });
+  //   io.emit('update', data.msg);
+  //   io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
+  // });
 
   socket.on('joinRoom', (room) => {
     console.log('joinRoom'+room);
@@ -150,7 +145,6 @@ io.on('connection', (socket) => {
   });
 });
 
-// 이거로해야 화면이 안겹침..
 app.get('/getChatHeaderList', async (req, res) => {
   try {
     if (!req.user) {
@@ -167,7 +161,9 @@ app.get('/getChatHeaderList', async (req, res) => {
           {
             room: room.room,
             user: room.user2,
-            msg: lastChat.msg
+            msg: lastChat.msg,
+            chatTime: lastChat.chatTime,
+            lastChatUser: lastChat.user
           }
         )
       } else {
@@ -175,7 +171,9 @@ app.get('/getChatHeaderList', async (req, res) => {
           {
             room: room.room,
             user: room.user1,
-            msg: lastChat.msg
+            msg: lastChat.msg,
+            chatTime: lastChat.chatTime,
+            lastChatUser: lastChat.user
           }
         )
       }
@@ -197,28 +195,85 @@ app.get('/getChatHeaderList', async (req, res) => {
 
 // app.get('/getChatting/:id', async (req, res) => {
 app.get('/getChatting', async (req, res) => {
-  // const id = req.params.id;
-  const id = req.query.id;
-  const me = req.user.userId;
-  // const from = '아아'
-  console.log('id'+id);
-  console.log('me'+me);
-  const resulte = await db.collection('chat').findOne({ room: [me, id] });
-  console.log('처음리절트'+resulte?.room);
-  if (!resulte?.user1) {
-    const resulte2 = await db.collection('chat').findOne({ room: [id, me] });
-    console.log('이프문'+resulte2);
-    return res.json({
+  try {
+    const id = req.query.id;
+    const me = req.user.userId;
+    console.log('id'+id);
+    console.log('me'+me);
+    const resulte = await db.collection('chat').findOne({ room: [me, id] });
+    if (!resulte?.user1) {
+      const resulte2 = await db.collection('chat').findOne({ room: [id, me] });
+      return res.json({
+        message: '성공',
+        resulte2
+      });
+    }
+    res.json({
       message: '성공',
-      resulte2
+      resulte
+    }) 
+    
+  } catch (err) {
+    console.error(err);
+    res.json({
+      message: '불러오기 실패'
     });
   }
-  console.log('이프밑에');
-  res.json({
-    message: '성공',
-    resulte
-  }) 
 });
+
+// 채팅중 충돌 가능성 있음
+app.post(`/inChating`, async (req, res) => {
+  try {
+    const room = req.body.data.room;
+    const id = req.body.data.id;
+    const user2 = req.body.data.user2;
+    const msg = req.body.data.msg;
+    const chatTime = new Date();
+    if (!user2) {
+      throw new Error('상대방을 찾을 수 없습니다!');
+    }
+    const loginUser = req.user.userId;
+    const findChat = await db.collection('chat').findOne({ room: [room, user2] });
+    if (!findChat) {
+      const findChatDetail = await db.collection('chat').findOne({ room: [user2, room] });
+      if (!findChatDetail) {
+        await db.collection('chat').insertOne({ room: [room, user2], user1: room, user2: user2 });
+      }
+    }
+  
+    const listData = { user: id, msg: msg, chatTime }
+    const isUpdate = await db.collection('chat').updateOne({user1: id, user2: user2}, { $push: { chatList: {...listData} } });
+    if (isUpdate.matchedCount === 0) {
+      await db.collection('chat').updateOne({user1: user2, user2: id}, { $push: { chatList: {...listData} } });
+    }
+  
+    let resulte = await db.collection('chat').findOne({ room: [id, user2] });
+    if (!resulte?.user1) {
+      resulte = await db.collection('chat').findOne({ room: [user2, id] });
+    }
+    const lastChat = resulte.chatList.pop();
+    const lastChatRoom = resulte.room;
+  
+    io.emit('update', msg);
+    console.log(lastChatRoom);
+    console.log(loginUser.toString());
+    console.log(user2.toString());
+    if (lastChatRoom.find(user => user == loginUser.toString()) && lastChatRoom.find(user => user == user2.toString())) {
+      io.to(resulte.room).emit('updateChatDetail', lastChat);
+      console.log('이프실행');
+    }
+    res.json({
+      flag: true,
+      message: '성공'
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
+})
 
 
 app.use((req, res, next) => {
