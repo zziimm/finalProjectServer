@@ -115,12 +115,15 @@ router.post('/plusCart', async (req, res) => {
 // 상세화면에서 구매 후 구매 목록에 추가
 router.post('/purchaseAdd', async (req, res) => {
   try {
-    const postId = req.body.postId;
+    let postId = req.body.postId;
+    postId = new ObjectId(postId);
+    const title = req.body.title;
+    const price = req.body.price;
     const count = req.body.productCount;
     const user = req.user._id;
     const date = new Date();
-
-    await db.collection('purchase').insertOne({ postId, count, user, date });
+    const list = [{title, price, count, postId}];
+    await db.collection('purchase').insertOne({ user, date, list });
     res.json({
       flag: true,
       message: '구매 목록 추가 성공',
@@ -372,12 +375,10 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
 });
 
 // 구매 완료된 목록 주기
-router.get('/purchase/:id', async (req, res) => {
+router.get('/purchase', async (req, res) => {
   try {
-    const id = req.params.id;
-    console.log(id);
-    const lists = await db.collection('purchase').find({ user: new ObjectId(id) }).toArray();
-    // console.log(lists);
+    const id = req.user._id;
+    const lists = await db.collection('purchase').find({ user: id }).toArray();
     res.json({
       flag: true,
       message: '구매 목록 불러오기 성공',
