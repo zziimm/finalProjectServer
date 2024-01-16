@@ -221,6 +221,7 @@ app.get('/getChatting', async (req, res) => {
   }
 });
 
+
 // 채팅중 충돌 가능성 있음
 app.post(`/inChating`, async (req, res) => {
   try {
