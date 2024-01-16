@@ -47,31 +47,32 @@ const upload = multer({
 // Fleamarket_List
 router.get('/', async (req, res) => {
   try {
-    let posts = await db.collection('vincommunity').find({}).sort({ _id: -1 }).toArray();
+    const { dogType, category, area, price, view } = req.query.select;
     
-    if (req.query.select) {
-      const { dogType, category, area, price, view } = req.query.select;
-  
-      if (dogType) {
-        posts = await db.collection('vincommunity').find({ dogType }).sort({ _id: -1 }).toArray();
-      }
-      if (category) {
-        posts = await db.collection('vincommunity').find({ category }).sort({ _id: -1 }).toArray();
-      }
-      if (area) {
-        posts = await db.collection('vincommunity').find({ area }).sort({ _id: -1 }).toArray();
-      }
-      if (price === 'min') {
-        posts = posts.sort((a, b) => { return b.price - a.price });
-      } else {
-        posts = posts.sort((a, b) => { return a.price - b.price });
-      }
-      if (view === 'min') {
-        posts = posts.sort((a, b) => { return b.view - a.view });
-      } else {
-        posts = posts.sort((a, b) => { return a.view - b.view });
-      }
+    let posts = await db.collection('vincommunity').find({}).sort({ id: -1 }).toArray();
+    
+    if (dogType) {
+      posts = posts.filter(post => { return post.dogType === dogType });
     }
+    if (category) {
+      posts = posts.filter(post => { return post.category === category });
+    }
+    if (area) {
+      posts = posts.filter(post => { return post.area === area });
+    }
+    if (price === 'min') {
+      posts = posts.sort((a, b) => { return a.price - b.price });
+    } 
+    if (price === 'max') {
+      posts = posts.sort((a, b) => { return b.price - a.price });
+    }
+    if (view === 'min') {
+      posts = posts.sort((a, b) => { return a.view - b.view });
+    } 
+    if (view === 'max') {
+      posts = posts.sort((a, b) => { return b.view - a.view });
+    } 
+      
     res.json({
       flag: true,
       message: '데이터 불러오기 성공',
@@ -96,9 +97,7 @@ router.get('/number', async (req, res) => {
 });
 
 router.get('/detail/:postId', async (req, res) => {
-  console.log(typeof(req.params.postId));
   const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
-  console.log(postData);
   res.json({
     flag: true,
     message: '데이터 불러오기 성공(상세보기)',
