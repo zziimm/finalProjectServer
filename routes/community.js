@@ -88,14 +88,17 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const bestViewPost = await db.collection('community').find({}).sort({ view: -1 }).limit(5).toArray();
-    const recentPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
-    const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(10).toArray();
+    const recentDailyPost = await db.collection('community').find({ type: 'daily' }).sort({ id: -1 }).limit(5).toArray();
+    const recentToktokPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
+    // const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(5).toArray();
+  
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
       bestViewPost,
-      recentPost,
-      recentExchange
+      recentDailyPost,
+      recentToktokPost,
+      // recentExchange
     });
   } catch (err) {
     console.error(err);

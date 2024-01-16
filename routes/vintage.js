@@ -53,13 +53,13 @@ router.get('/', async (req, res) => {
       const { dogType, category, area, price, view } = req.query.select;
   
       if (dogType) {
-        posts = await db.collection('vincommunity').find({ dogType }).toArray();
+        posts = await db.collection('vincommunity').find({ dogType }).sort({ _id: -1 }).toArray();
       }
       if (category) {
-        posts = await db.collection('vincommunity').find({ category }).toArray();
+        posts = await db.collection('vincommunity').find({ category }).sort({ _id: -1 }).toArray();
       }
       if (area) {
-        posts = await db.collection('vincommunity').find({ area }).toArray();
+        posts = await db.collection('vincommunity').find({ area }).sort({ _id: -1 }).toArray();
       }
       if (price === 'min') {
         posts = posts.sort((a, b) => { return b.price - a.price });
