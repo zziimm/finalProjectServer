@@ -96,14 +96,16 @@ router.get('/number', async (req, res) => {
 });
 
 router.get('/detail/:postId', async (req, res) => {
-  console.log(typeof(req.params.postId));
-  const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
-  console.log(postData);
-  res.json({
-    flag: true,
-    message: '데이터 불러오기 성공(상세보기)',
-    postData,
-  });
+  try {
+    const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공(상세보기)',
+      postData,
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 // router.get('/detail/:postId', async (req, res) => {
