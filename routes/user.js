@@ -196,8 +196,7 @@ router.get('/login', async (req, res) => {
         message: '불러오기 성공',
         data: result
       })
-    }
-    else {
+    } else {
       res.json({
         flag: false,
         message: '비로그인 상태',
@@ -215,26 +214,33 @@ router.get('/login', async (req, res) => {
 
 // 로그인
 router.post('/login', (req, res, next) => {
-
-  passport.authenticate('local', (authError, user, info) => {
-    if (authError) {
-      return res.json(authError)
-    }
-    if (!user) {
-      return res.json(info.message)
-    }
-
-    req.login(user, (loginError) => {
-      if (loginError) return next(loginError);
-      // res.redirect('/')
-
-      res.json({
-        flag: true,
-        message: '로그인 성공',
-        user
+  try {
+    passport.authenticate('local', (authError, user, info) => {
+      if (authError) {
+        return res.json(authError)
+      }
+      if (!user) {
+        return res.json(info.message)
+      }
+  
+      req.login(user, (loginError) => {
+        if (loginError) return next(loginError);
+        // res.redirect('/')
+  
+        res.json({
+          flag: true,
+          message: '로그인 성공',
+          user
+        })
       })
-    })
-  })(req, res, next);
+    })(req, res, next);
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '에러발생'
+    });
+  }
 });
 
 
@@ -249,14 +255,22 @@ router.post('/login', (req, res, next) => {
 
 // 로그아웃
 router.get('/logout', (req, res, next) => {
-  req.logout((logoutError) => {
-    if (logoutError) return next(logoutError)
-    // res.redirect('/');
-    res.json({
-      flag: true,
-      message: '로그아웃 되었습니다'
+  try {
+    req.logout((logoutError) => {
+      if (logoutError) return next(logoutError)
+      // res.redirect('/');
+      res.json({
+        flag: true,
+        message: '로그아웃 되었습니다'
+      })
     })
-  })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '에러발생, 로그아웃 실패'
+    });
+  }
 })
 
 // 유저 정보 주기(마이페이지)
@@ -271,6 +285,10 @@ router.get('/getUserInfo', async (req, res) => {
     })
   } catch (error) {
     console.error(error);
+    res.json({
+      flag: false,
+      message: '페이지를 불러오는 중 에러가 발생했습니다.'
+    });
   }
 });
 
