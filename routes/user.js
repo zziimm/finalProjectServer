@@ -255,8 +255,8 @@ router.get('/logout', (req, res, next) => {
 
 // 유저 정보 주기(마이페이지)
 router.get('/getUserInfo', async (req, res) => {
-  const user = req.user._id;
   try {
+    const user = req.user._id;
     const result = await db.collection('userInfo').findOne( {_id: user });
     console.log(result);
     res.json({
@@ -270,9 +270,9 @@ router.get('/getUserInfo', async (req, res) => {
 
 // 유저 정보 변경
 router.post('/editPersonalInfo', async (req, res) => {
-  const { nick, dogType, dogName, dogAge } = req.body;
-  const user = req.user._id;
   try {
+    const { nick, dogType, dogName, dogAge } = req.body;
+    const user = req.user._id;
     if (nick === '') {
       throw new Error('닉네임을 입력해주세요!');
     }
