@@ -95,8 +95,9 @@ router.post('/plusCart', async (req, res) => {
         const nowCount = hasItem[0].count;
         await db.collection('cart').updateOne({ user, list: { $elemMatch: { postId: new ObjectId(postId) } } }, { $set: { 'list.$.count': nowCount + count } });
       } else {
-        const newArr = [...hasCart.list, { title, price, count, postId: new ObjectId(postId) }];
-        await db.collection('cart').updateOne({ user }, { $set: { list: newArr } });
+        // 장바구니는 있는데 없던 물건일 때
+        const newArr = [...hasCart.list, {title, price, count, postId: new ObjectId(postId)}];
+        await db.collection('cart').updateOne({user}, {$set:{list: newArr}});
       }
     } else {
       // 장바구니 첫 생성
@@ -111,42 +112,65 @@ router.post('/plusCart', async (req, res) => {
   }
 });
 
-// 수량 1개씩 추가 버튼
-router.post('/plusCount', async (req, res) => {
-  const postId = req.body.postId;
-  const user = req.user._id;
+// 상세화면에서 구매 후 구매 목록에 추가
+router.post('/purchaseAdd', async (req, res) => {
   try {
-    await db.collection('cart').updateOne({ postId, user }, { $inc: { count: 1 } });
-    const result = await db.collection('cart').findOne({ postId, user });
-    const count = result.count;
+    let postId = req.body.postId;
+    postId = new ObjectId(postId);
+    const title = req.body.title;
+    const price = req.body.price;
+    const count = req.body.productCount;
+    const user = req.user._id;
+    const date = new Date();
+    const list = [{title, price, count, postId}];
+    await db.collection('purchase').insertOne({ user, date, list });
     res.json({
       flag: true,
-      message: '카운트 +1 성공',
-      count
+      message: '구매 목록 추가 성공',
     });
   } catch (err) {
     console.error(err);
   }
 });
 
-// 수량 1개씩 다운 버튼
-router.post('/minusCount', async (req, res) => {
-  const postId = req.body.postId;
-  const user = req.user._id;
+// 장바구니에서 삭제
+router.post('/deleteCart', async (req, res) => {
   try {
-    const data = await db.collection('cart').findOne({ postId, user });
-    if (data.count === '1') {
-      throw new Error('1 이하로 감소시킬 수 없습니다');
-    } else {
-      await db.collection('cart').updateOne({ postId, user }, { $inc: { count: -1 } });
-      const result = await db.collection('cart').findOne({ postId, user });
-      const count = result.count;
-      res.json({
-        flag: true,
-        message: '카운트 -1 성공',
-        count
-      });
-    }
+    let postId = req.body.postId;
+    const user = req.user._id;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)}}}, {
+      $pull: { list: {postId: new ObjectId(postId)} }
+    });
+    const result = await db.collection('cart').findOne({ user });
+    res.json({
+      flag: true,
+      message: '삭제 성공',
+      result
+    })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '삭제 실패'
+    })
+  }
+});
+
+// 수량 1개씩 추가 버튼
+router.post('/plusCount', async (req, res) => {
+  const postId = req.body.postId;
+  try {
+    const user = req.user._id;
+    const cart = await db.collection('cart').findOne({ user });
+    const element = cart.list.filter(item => item.postId == postId);
+    const nowCount = element[0].count;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' :  nowCount+1}});
+    const result = await db.collection('cart').findOne({ user });
+    res.json({
+      flag: true,
+      message: '카운트 +1 성공',
+      result
+    });
   } catch (err) {
     console.error(err);
     res.json({
@@ -156,6 +180,51 @@ router.post('/minusCount', async (req, res) => {
   }
 });
 
+// 수량 1개씩 다운 버튼
+router.post('/minusCount', async (req, res) => {
+  const postId = req.body.postId;
+  try {
+    const user = req.user._id;
+    const cart = await db.collection('cart').findOne({ user });
+    const element = cart.list.filter(item => item.postId == postId);
+    const nowCount = element[0].count;
+    await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' :  nowCount-1}});
+    const result = await db.collection('cart').findOne({ user });
+    res.json({
+      flag: true,
+      message: '카운트 -1 성공',
+      result
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
+});
+
+// 장바구니에서 구매 후 구매 목록에 추가, 장바구니 비우기
+router.get('/purchaseAdds', async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const cartList = await db.collection('cart').findOne({user: userId});
+    const { user, list } = cartList;
+    const date = new Date();
+    await db.collection('purchase').insertOne({ user, list, date });
+    await db.collection('cart').deleteOne({user: new ObjectId(userId)});
+    res.json({
+      flag: true,
+      message: '구매 완료 및 장바구니 삭제'
+    })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '구매 실패'
+    })
+  }
+});
 
 // 상품 상세페이지 가져오기
 router.get('/detail/:postId', async (req, res) => {
@@ -258,12 +327,12 @@ router.get('/reviewDeleteAll', async (req, res) => {
 // 상품 상세페이지_Q&A 가져오기
 router.get('/qna/:postId', async (req, res) => {
   try {
-    const postId = req.params.postId
+    const postId = req.params.postId;
     const itemQna = await db.collection('qna').find({ postId: postId }).toArray();
     res.json({
       flag: true,
       message: 'Q&N 불러오기 성공',
-      itemQna
+      itemQna,
     });
   } catch (err) {
     console.error(err);
@@ -272,15 +341,17 @@ router.get('/qna/:postId', async (req, res) => {
 
 // 상품 Q&A 작성하기
 router.post('/qna/:postId', async (req, res) => {
+  const postId = req.params.postId;
+  const title = req.body.title;
+  const content = req.body.content;
+  const date = req.body.date;
   try {
-    const postId = req.params.postId;
-    const title = req.body.title;
-    const content = req.body.content;
-    const date = req.body.date;
-    await db.collection('qna').insertOne({ date, title, content, postId: postId, status: '답변대기' });
+    const user = req.user._id;
+    const userName = req.user.signUserNicname;
+    await db.collection('qna').insertOne({ date, title, content, postId, user, userName, status: '답변대기' });
     res.json({
       flag: true,
-      message: 'Q&N 등록 완료'
+      message: 'Q&A 등록 완료'
     });
   } catch (err) {
     console.error(err);
@@ -304,258 +375,20 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
 });
 
 // 구매 완료된 목록 주기
-router.post('/purchase', async (req, res) => {
+router.get('/purchase', async (req, res) => {
   try {
-    const userId = req.body.userId;
-    const list = await db.collection('purchase').find({ userId: new ObjectId(userId) }).toArray();
+    const id = req.user._id;
+    const lists = await db.collection('purchase').find({ user: id }).toArray();
     res.json({
       flag: true,
       message: '구매 목록 불러오기 성공',
-      list
+      list: lists
     });
   } catch (err) {
     console.error(err);
   }
 });
 
-// 구매 목록에 추가
-router.post('/purchaseAdd', async (req, res) => {
-  try {
-    const postId = req.body.postId;
-    const count = req.body.productCount;
-    const user = req.user._id;
-    const date = new Date();
-
-    await db.collection('purchase').insertOne({ postId, count, user, date });
-    res.json({
-      flag: true,
-      message: '구매 목록 추가 성공',
-    });
-  } catch (err) {
-    console.error(err);
-  }
-});
 
 
 module.exports = router;
-
-
-
-
-
-
-
-
-
-// 아래부터 진행님 작성 라우터 (테스트 중이셔서 실사용에는 아직 어려울 것 같음)
-
-// router.get('/q', (req, res) => {
-//   try {
-//     const test = db.collection('shop').insertOne({
-//       item: '간식',
-//       price: 5000,
-//       imgUrl: 'www',
-//       title: '테스트',
-//       text: '테스트',
-//       age: 10,
-//       size: 'big'
-//     })
-//     res.send('ok')
-//   } catch (err) {
-//     console.error(err);
-//   }
-// })
-
-
-// //  shop C
-// router.get('/qq', async (req, res) => {
-//   const result = await db.collection('shop').find({ }).toArray();
-//   res.send(result);
-// });
-
-// // shop R
-// router.get('/', (req, res) => {
-// 	res.send('OK');
-// })
-
-// // shop U
-// // router.post(`/shop`, async (req, res) => {
-// //   const { postId } = req.body;
-// //   console.log(postId);
-// //   const count = await db.collection('shop').updateOne({ _id: new ObjectId(postId) }, {$inc: { view: 1 }});
-// //   console.log('카운트',count);
-// //   const result = await db.collection('shop').findOne({ _id: new ObjectId(postId) });
-// //   console.log(result);
-// //   res.json({
-// //     flag: true,
-// //     data: result,
-// //   });
-// // });
-
-
-// router.get(`/qqq`, async (req, res) => {
-//   // const { 123 } = req.body;
-//   const abc = '6583a5a6f703dc24018568c1'
-//   console.log(123);
-//   const count = await db.collection('shop').updateOne({ _id: new ObjectId('6583a5a6f703dc24018568c1') }, {$inc: { view: 1 }});
-//   console.log('카운트',count);
-//   const result = await db.collection('shop').findOne({ _id: new ObjectId('6583a5a6f703dc24018568c1') });
-//   console.log(result);
-//   res.json({
-//     flag: true,
-//     data: result,
-//   });
-// });
-
-// // shop D
-// // router.post('/delete', async (req, res) => {
-// //   try {
-// //     const result = await db.collection('shop').deleteOne({
-// //       _id: new ObjectId(req.body.postId),
-// //       writer: req.body.username
-// //     })
-// //     if (result.deletedCount === 0) {
-// //       throw new Error('삭제 실패');
-// //     }
-// //     res.json({
-// //       flag: true,
-// //       message: '삭제 성공'
-// //     });
-// //   } catch (err) {
-// //     console.error(err);
-// //     res.status(500).json({
-// //       flag: false,
-// //       message: err.message
-// //     });
-// //   }
-// // });
-
-// router.post('/delete', async (req, res) => {
-//   try {
-//     const result = await db.collection('shop').deleteOne({
-//       _id: new ObjectId('6583a5a6f703dc24018568c1'),
-//     })
-//     if (result.deletedCount === 0) {
-//       throw new Error('삭제 실패');
-//     }
-//     res.json({
-//       flag: true,
-//       message: '삭제 성공'
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({
-//       flag: false,
-//       message: err.message
-//     });
-//   }
-// });
-
-
-// // 장바구니 C
-
-
-// router.get('/w', (req, res) => {
-//   try {
-//     const test = db.collection('basket').insertOne({
-//       userid: 10,
-//       amount: 2,
-//       item: 'box'
-//     })
-//     res.send('ok')
-//   } catch (err) {
-//     console.error(err);
-//   }
-// })
-
-// router.get("/basket", async (req, res) => {
-//   const basket = await   basket.find({});
-//   const productId = basket.map(basket => basket.productId);
-
-//   productsInCart = await Products.find()
-//     .where("productId")
-//     .in(productId);
-
-
-//   concatCart = basket.map(c => {
-//     for (let i = 0; i < productsInCart.length; i++) {
-//       if (productsInCart[i].productId == c.productId) {
-//         console.log(c.quantity, productsInCart[i]);
-//         return { quantity: c.quantity, products: productsInCart[i] };
-//       }
-//     }
-//   });
-
-//   res.json({
-//     basket: concatCart
-//   });
-// });
-
-// // 장바구니 R
-
-// router.get('/baskets', (req, res) => {
-// 	res.send('장바구니')
-// })
-
-// // 장바구니 U
-
-// router.post("/:productId/basket", async (req, res) => {
-//   const { productId } = req.params;
-//   const { quantity } = req.body;
-
-//   isBasket = await Basket.find({ productId });
-//   console.log(isBasket, quantity);
-//   if (isBasket.length) {
-//     await Basket.updateOne({ productId }, { $set: { quantity } });
-//   } else {
-//     await Basket.create({ productId: productId, quantity: quantity });
-//   }
-//   res.send({ result: "success" });
-// });
-
-
-
-
-// // 장바구니 D
-
-// router.delete("/:productId/basket", async (req, res) => {
-//   const { productId } = req.params;
-
-//   const isProductsInBasket = await Basket.find({ productId });
-//   if (isProductsInBasket.length > 0) {
-//     await Basket.deleteOne({ productId });
-//   }
-
-//   res.send({ result: "success" });
-// });
-
-
-// // router.patch("/:productId/basket", async (req, res) => {
-// //   const { productId } = req.params;
-// //   const { quantity } = req.body;
-
-// //   isBasket = await Basket.find({ productId });
-// //   console.log(isBasket, quantity);
-// //   if (isBasket.length) {
-// //     await Basket.updateOne({ productId }, { $set: { quantity } });
-// //   }
-
-// //   res.send({ result: "success" });
-// // })
-
-// router.patch("/basketq", async (req, res) => {
-//   // const { productId } = req.params;
-//   // const { quantity } = req.body;
-//   const productId = 10
-//   const quantity = 'box'
-
-//   isBasket = await db.collection('basket').find({ productId });
-//   console.log(isBasket, quantity);
-//   if (isBasket.length) {
-//     await db.collection(basket).updateOne({ productId }, { $set: { quantity } });
-//   }
-
-//   res.send({ result: "success" });
-// })
-
-

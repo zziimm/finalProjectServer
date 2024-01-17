@@ -35,10 +35,11 @@ const mainRouter = require('./routes/index');
 const userRouter = require('./routes/user');
 const shopRouter = require('./routes/shop')
 const communityRouter = require('./routes/community');
-const vintageCommunityRouter = require('./routes/vintage')
+const vintageCommunityRouter = require('./routes/vintage');
+const { ObjectId } = require('mongodb');
 app.set('port', process.env.PORT || 8088);
 
- 
+
 passportConfig();
 connect();
 app.set('view engine', 'ejs'); 
@@ -86,122 +87,193 @@ app.use('/shop', shopRouter);
 app.use('/community', communityRouter)
 app.use('/vintage', vintageCommunityRouter);
 
-// socket 테스트
-app.get('/socket', async (req, res) => {
-  // await db.collection('chat').find({});
-  res.render('socket.ejs');
-});
 // socket
 io.on('connection', (socket) => {
-  // 생각해보기 대화내용 db저장
-  // 채팅방 입장 시 chat 컬렉션에 title: 입장한 유저(2명)의 닉네임 데이터 생성
-  // 채팅할 때마다 
+  console.log(io.httpServer._connections);
 
   // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
-  
-  socket.on('getIn', async (server) => {
-    console.log(server);
-    const chatData = await db.collection('chat').find({ user1: server.server, user2: server.id });
-    const msg = server.id + '님이 입장하였습니다!'
-    socket.join(server.server);
-    const resulte = { chatData, msg };
-    io.to(server.server).emit('open', resulte);
-  });
-
-  socket.on('getOut', (data) => {
-    console.log(data);
-    const msg = data.id + '님이 퇴장하였습니다!'
-    socket.leave(data.server);
-    io.to(data.server).emit('close', msg);
-  });
-
-  socket.on('userSend', async (data) => {
-    console.log('유저가 보낸 메세지:', data.msg);
-    console.log('유저아이디:', data.id);
-    if (data.room !== data.id) {
-      const findChat = await db.collection('chat').findOne({ user1: data.room, user2: data.id });
-      console.log(findChat);
-      if (!findChat) {
-        await db.collection('chat').insertOne({ user1: data.room, user2: data.id });
-        
-      }
-    }
-    console.log('data.room'+data.room);
-    console.log('data.id'+data.id);
-    const findUser = await db.collection('chat').findOne({ user1: data.room, user2: data.id });
-    console.log(findUser);
-    if (findUser.user1 === data.room) {
-      await db.collection('chat').updateOne({ user1: data.room, user2: data.id }, { $push: { user1Chat: data.msg } });
-    } else if (findUser.user2 === data.id) {
-      await db.collection('chat').updateOne({ user1: data.room, user2: data.id }, { $push: { user2Chat: data.msg } });
-      
-    }
-    if (data.room) {
-      io.to(data.room).emit('sendMsg', data);
-    } else {
-      // 전체메세지로 감
-      io.emit('sendMsg', false);
-    }
-  });
-
-  // fromHere
-  socket.on('fromHere', async (data) => {
-    const findChat = await db.collection('chat').findOne({ room: data.room, user1: data.room, user2: data.id });
-    if (!findChat) {
-      await db.collection('chat').insertOne({ room: data.room, user1: data.room, user2: data.id });
-    }
-    const listData = { user: data.id, msg: data.msg }
-    await db.collection('chat').updateOne({ room: data.room, user2: data.id }, { $push: { chatList: { ...listData }}});
-    const chat = await db.collection('chat').findOne({ room: data.room, user2: data.id });
-    const from = chat.user2;
-    // const lastChat = chat.user2chat.pop()
-    // console.log(lastChat);
-    const lastChat = chat.chatList.pop().msg
-    console.log(lastChat);
-    const chatData = { from, lastChat }
-    const toInChatroom = { from, msg: data.msg }
-    // socket.join((data.room+data.id));
-    io.to(data.room).emit('messageBox', chatData);
-    io.to(data.room).emit('inChatroom', toInChatroom);
-  });
-  
-  socket.on('login', (server) => {
+  socket.on('login', async (server) => {
     console.log('login'+server);
     socket.join(server);
+    // io.emit('throwData', chatData);
+  });
+  
+
+  // 실사용
+  // socket.on('answer', async (data) => {
+  //   // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
+  //   console.log(data);
+  //   const findChat = await db.collection('chat').findOne({ room: [data.room, data.user2] });
+  //   if (!findChat) {
+  //     const findChatDetail = await db.collection('chat').findOne({ room: [data.user2, data.room] });
+  //     if (!findChatDetail) {
+  //       await db.collection('chat').insertOne({ room: [data.room, data.user2], user1: data.room, user2: data.user2 });
+  //     }
+  //   }
+
+  //   const listData = { user: data.id, msg: data.msg }
+  //   const isUpdata = await db.collection('chat').updateOne({user1: data.id, user2: data.user2}, { $push: { chatList: {...listData} } });
+  //   if (isUpdata.matchedCount === 0) {
+  //     await db.collection('chat').updateOne({user1: data.user2, user2: data.id}, { $push: { chatList: {...listData} } });
+  //   }
+
+  //   let resulte = await db.collection('chat').findOne({ room: [data.id, data.user2] });
+  //   if (!resulte?.user1) {
+  //     resulte = await db.collection('chat').findOne({ room: [data.user2, data.id] });
+  //   }
+  //   const lastChat = resulte.chatList.pop();
+  //   const lastChatRoom = resulte.room;
+  //   const chatDataInRoom = { lastChat, lastChatRoom }
+
+  //   io.emit('update', data.msg);
+  //   io.to(resulte.room).emit('updateChatDetail', chatDataInRoom);
+  // });
+
+  socket.on('joinRoom', (room) => {
+    console.log('joinRoom'+room);
+    socket.join(room);
+  })
+
+  socket.on('leaveRoom', (room) => {
+    console.log('leaveRoom'+room);
+    socket.leave(room);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('user disconnected');
   });
 });
 
 app.get('/getChatHeaderList', async (req, res) => {
-  const resulte = await db.collection('chat').find({ room: '디디' }).toArray();
-  console.log(resulte);
-  const chatData = resulte.map(room => {
-    return (
-      {
-        user: room.user2, 
-        msg: room.chatList.pop().msg
+  try {
+    if (!req.user) {
+      throw new Error('로그인을 해주세요!');
+    }
+    const loginUser = req.user.userId;
+    const resulte = await db.collection('chat').find({ room: loginUser.toString() }).toArray();
+    console.log('resulte'+resulte);
+    let chatData = resulte.map(room => {
+      let lastChat = room.chatList.pop();
+      console.log(lastChat);
+      if (room.user1 == loginUser) {
+        return (
+          {
+            room: room.room,
+            user: room.user2,
+            msg: lastChat.msg,
+            chatTime: lastChat.chatTime,
+            lastChatUser: lastChat.user
+          }
+        )
+      } else {
+        return (
+          {
+            room: room.room,
+            user: room.user1,
+            msg: lastChat.msg,
+            chatTime: lastChat.chatTime,
+            lastChatUser: lastChat.user
+          }
+        )
       }
-    )
-  });
-  // const lastChat = resulte.map(room => room.chatList.pop().msg)
-  console.log(chatData);
-
-  res.json({
-    flag: true,
-    chatData
-  });
+    });
+    console.log(chatData);
+    res.json({
+      flag: true,
+      chatData
+    });
+    
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
 });
 
+// app.get('/getChatting/:id', async (req, res) => {
 app.get('/getChatting', async (req, res) => {
-  const from = req.query.from;
-  // const from = '아아'
-  console.log('from'+from);
-  const resulte = await db.collection('chat').find({ user2: from }).toArray();
-  console.log(resulte);
-  res.json({
-    message: '성공',
-    resulte
-  })
+  try {
+    const id = req.query.id;
+    const me = req.user.userId;
+    console.log('id'+id);
+    console.log('me'+me);
+    const resulte = await db.collection('chat').findOne({ room: [me, id] });
+    if (!resulte?.user1) {
+      const resulte2 = await db.collection('chat').findOne({ room: [id, me] });
+      return res.json({
+        message: '성공',
+        resulte2
+      });
+    }
+    res.json({
+      message: '성공',
+      resulte
+    }) 
+    
+  } catch (err) {
+    console.error(err);
+    res.json({
+      message: '불러오기 실패'
+    });
+  }
+});
+
+
+// 채팅중 충돌 가능성 있음
+app.post(`/inChating`, async (req, res) => {
+  try {
+    const room = req.body.data.room;
+    const id = req.body.data.id;
+    const user2 = req.body.data.user2;
+    const msg = req.body.data.msg;
+    const chatTime = new Date();
+    if (!user2) {
+      throw new Error('상대방을 찾을 수 없습니다!');
+    }
+    const loginUser = req.user.userId;
+    const findChat = await db.collection('chat').findOne({ room: [room, user2] });
+    if (!findChat) {
+      const findChatDetail = await db.collection('chat').findOne({ room: [user2, room] });
+      if (!findChatDetail) {
+        await db.collection('chat').insertOne({ room: [room, user2], user1: room, user2: user2 });
+      }
+    }
+  
+    const listData = { user: id, msg: msg, chatTime }
+    const isUpdate = await db.collection('chat').updateOne({user1: id, user2: user2}, { $push: { chatList: {...listData} } });
+    if (isUpdate.matchedCount === 0) {
+      await db.collection('chat').updateOne({user1: user2, user2: id}, { $push: { chatList: {...listData} } });
+    }
+  
+    let resulte = await db.collection('chat').findOne({ room: [id, user2] });
+    if (!resulte?.user1) {
+      resulte = await db.collection('chat').findOne({ room: [user2, id] });
+    }
+    const lastChat = resulte.chatList.pop();
+    const lastChatRoom = resulte.room;
+  
+    io.emit('update', msg);
+    console.log(lastChatRoom);
+    console.log(loginUser.toString());
+    console.log(user2.toString());
+    if (lastChatRoom.find(user => user == loginUser.toString()) && lastChatRoom.find(user => user == user2.toString())) {
+      io.to(resulte.room).emit('updateChatDetail', lastChat);
+      console.log('이프실행');
+    }
+    res.json({
+      flag: true,
+      message: '성공'
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: err.message
+    });
+  }
 })
 
 

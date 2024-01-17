@@ -1,5 +1,5 @@
 const express = require('express');
-const { ObjectId } = require('mongodb');
+const { ObjectId, Long } = require('mongodb');
 
 // S3
 const multer = require('multer');
@@ -88,14 +88,17 @@ const upload = multer({
 router.get('/', async (req, res) => {
   try {
     const bestViewPost = await db.collection('community').find({}).sort({ view: -1 }).limit(5).toArray();
-    const recentPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
-    const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(10).toArray();
+    const recentDailyPost = await db.collection('community').find({ type: 'daily' }).sort({ id: -1 }).limit(5).toArray();
+    const recentToktokPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
+    // const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(5).toArray();
+  
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
       bestViewPost,
-      recentPost,
-      recentExchange
+      recentDailyPost,
+      recentToktokPost,
+      // recentExchange
     });
   } catch (err) {
     console.error(err);
@@ -171,28 +174,38 @@ router.get('/', async (req, res) => {
 
 // DailyDog_List
 router.get('/daily', async (req, res) => {
-  const postsPerPage = 9; // 페이지 당 콘텐츠 개수
-  const currentPage = req.query.page || 1; // 현재 페이지
-
-  // const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 5).limit(5).toArray();
-  const posts = await db.collection('vincommunity').find({}).skip((req.query.page - 1) * 9).limit(9).toArray();
-  // console.log(posts);
-  // const totalCount = await db.collection('vincommunity').countDocuments({}); // 전체 document 개수
-  // const numOfPage = Math.ceil(totalCount / postsPerPage); // 페이지 수
-  // res.render('vintage', { posts, numOfPage, currentPage, user:req.user });
-  // res.json(posts);
-
   try {
-    const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip((req.query.page - 1) * 9).limit(9).toArray();
+    const { perPage, page } = req.query
+    const ListsPerPage = Number(perPage); 
+    const currentPage = page || 1;
+
+    const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip((currentPage - 1) * ListsPerPage).limit(ListsPerPage).toArray();
     const totalCount = await db.collection('community').countDocuments({ type: 'daily' });
 
-    const numOfPage = Math.ceil(totalCount / postsPerPage);
+    const numOfPage = Math.ceil(totalCount / ListsPerPage);
+    
+    if (currentPage > numOfPage) {
+      return res.json({ flag: false, message: '없는 페이지 입니다.', data: [] });
+    }
 
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
       data,
       numOfPage
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// DailyDog_List_Number
+router.get('/daily/number', async (req, res) => {
+  try {
+    const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip(0).limit(1).toArray();
+    res.json({
+      flag: true,
+      id: data[0].id
     });
   } catch (err) {
     console.error(err);
@@ -212,24 +225,45 @@ router.get('/daily/detail/:postId', async (req, res) => {
 
 // DailyDog_Write
 router.post('/daily/insert', async (req, res) => {
-
-  const { id, title, content, author, authorId, date } = req.body
-
-  const imgUrl = req.body.imgUrl || '';
-  const imgKey = req.body.imgKey || '';
-
   try {
-    await db.collection('community').insertOne({
-      id,
-      title,
-      content,
-      imgUrl,
-      imgKey,
-      author,
-      authorId: new ObjectId(authorId),
-      date,
-      type: 'daily',
-      view: 0,
+    const { id, title, content, author, authorId, date } = req.body
+
+    let imgUrl = req.body.imgUrl || '';
+    let imgKey = req.body.imgKey || '';
+    
+    // s3_delete
+    if (imgKey) {
+      const deleteImgKey = imgKey.filter(key => !content.includes(key));
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+
+      imgUrl = imgUrl.filter(url => content.includes(url));
+      imgKey = imgKey.filter(key => content.includes(key));
+    }
+  
+    await db.collection('community').insertOne({ 
+      id, 
+      title, 
+      content, 
+      imgUrl, 
+      imgKey, 
+      author, 
+      authorId: new ObjectId(authorId), 
+      date, 
+      type: 'daily', 
+      view: 0, 
       like: [],
       dislike: []
     });
@@ -253,6 +287,103 @@ router.post('/daily/insert/image', upload.single('img'), async (req, res) => {
     fileName: imgUrl,
     fileKey: imgKey,
   });
+});
+
+// DailyDog_Delete
+router.delete('/daily/delete/:id', async (req, res) => {
+  try {
+    const data = await db.collection('community').findOne({ id: Number(req.params.id) });
+
+    const deleteImgKey = data.imgKey;
+    
+    // s3_delete
+    if (deleteImgKey) {
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+    }
+
+  await db.collection('community').deleteOne({ id: Number(req.params.id) });
+  res.json({
+    flag: true,
+    message: '데이터 삭제 성공'
+  });
+  } catch (err) {
+    console.error(err);
+  }
+}); 
+
+// DailyDog_Edit_List
+router.get('/daily/edit/:postId', async (req, res) => {
+  try {
+    const data = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공',
+      data
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+// DailyDog_Edit
+router.patch('/daily/edit/:postId', async (req, res) => {
+  try {
+    const { title, content } = req.body
+
+    let imgUrl = req.body.imgUrl || '';
+    let imgKey = req.body.imgKey || '';
+
+    // s3_delete 
+    if (imgKey) {
+      const prevImageItem = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
+      const prevImages = prevImageItem.imgKey.map(key => { return key });
+      
+      imgUrl = imgUrl.filter(url => content.includes(url));
+      imgKey = imgKey.filter(key => content.includes(key));
+      
+      const deleteImgKey = prevImages.filter(key => !imgKey.includes(key));
+
+      deleteImgKey.forEach(image => {
+        const bucketParams = { Bucket: 'finaltp', Key: image };
+
+        const run = async () => {
+          try {
+            const data = await s3.send(new DeleteObjectCommand(bucketParams))
+            console.log('성공', data);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+        run();
+      });
+    }
+
+    await db.collection('community').updateOne({
+      _id: new ObjectId(req.params.postId) 
+    }, {
+      $set: { title, content, imgUrl, imgKey }
+    });
+
+    res.json({
+      flag: true,
+      message: '데이터 수정 성공',
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 // DailyDog_View
@@ -329,10 +460,10 @@ router.patch('/daily/likedown/:type', async (req, res) => {
 });
 
 // DailyDog_Comment_List
-router.get('/daily/comment', async (req, res) => {
+router.get('/daily/comment/:postId', async (req, res) => {
   try {
-    const commentList = await db.collection('comment').find({ postId: new ObjectId(req.query.postId) }).toArray();
-    res.json(commentList)
+    const commentList = await db.collection('comment').find({ postId: new ObjectId(req.params.postId) }).toArray();
+    res.json(commentList)  
   } catch (err) {
     console.error(err);
   }
@@ -359,6 +490,20 @@ router.post('/daily/comment/insert', async (req, res) => {
     console.error(err);
   }
 });
+
+// DailyDog_Comment_Delete
+router.delete('/daily/comment/delete/:id', async (req, res) => {
+  try {
+    await db.collection('comment').deleteOne({ _id: new ObjectId(req.params.id) });
+
+    res.json({
+      flag: true,
+      message: '댓글 삭제 성공'
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}); 
 
 
 
@@ -405,29 +550,29 @@ router.patch('/daily/edit/:postId', upload.single('img'), async (req, res) => {
   }
 });
 // 삭제_데일리톡(일상)
-router.delete('/daily/delete/:postId', async (req, res) => {
-  const postId = req.params.postId;
-  try {
-    const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
-    const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
-    const run = async () => {
-      try {
-        const data = await s3.send(new DeleteObjectCommand(bucketParams))
-        console.log('성공', data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    await db.collection('community').deleteOne({ _id: new ObjectId(postId) });
-    run();
-    res.json({
-      flag: true,
-      message: '데이터를 성공적으로 지웠습니다.'
-    });
-  } catch (err) {
-    console.error(err);
-  }
-});
+// router.delete('/daily/delete/:postId', async (req, res) => {
+//   const postId = req.params.postId;
+//   try {
+//     const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
+//     const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
+//     const run = async () => {
+//       try {
+//         const data = await s3.send(new DeleteObjectCommand(bucketParams))
+//         console.log('성공', data);
+//       } catch (err) {
+//         console.error(err);
+//       }
+//     };
+//     await db.collection('community').deleteOne({ _id: new ObjectId(postId) });
+//     run();
+//     res.json({
+//       flag: true,
+//       message: '데이터를 성공적으로 지웠습니다.'
+//     });
+//   } catch (err) {
+//     console.error(err);
+//   }
+// });
 
 // 테스트 더미---- 
 router.get('/test', async (req, res) => {
@@ -820,7 +965,7 @@ router.post('/exchange/insert', upload.single('img'), async (req, res) => {
 
 
 // 쇼핑몰아이템 삽입 (관리자)
-router.post('/insertShopItem', upload.array('img'), async (req, res) => {
+router.post('/insertShopItem', upload.single('img'), async (req, res) => {
   // const userId = req.user._id;
   // const inputdata = req.body.inputdata;
   const brand = req.body.brand;
@@ -830,8 +975,10 @@ router.post('/insertShopItem', upload.array('img'), async (req, res) => {
   const size = req.body.size;
   const tag = req.body.tag;
   console.log(req.files);
-  const imgUrl = req.files.map(url => url.location) || '';
-  const imgKey = req.files.map(url => url.key) || '';
+  const imgUrl = req.file.location || '';
+  const imgKey = req.file.key || '';
+  // const imgUrl = req.files.map(url => url.location) || '';
+  // const imgKey = req.files.map(url => url.key) || '';
   console.log(imgUrl);
   console.log(imgKey);
   // const imgUrl = req.file?.location || '';
@@ -894,6 +1041,8 @@ router.post('/daily/editShopItem/:itemId', upload.single('img'), async (req, res
 router.get('/testChat', async (req, res) => {
   res.render('chat.ejs');
 });
+
+
 
 
 
