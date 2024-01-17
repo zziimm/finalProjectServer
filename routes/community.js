@@ -91,7 +91,7 @@ router.get('/', async (req, res) => {
     const recentDailyPost = await db.collection('community').find({ type: 'daily' }).sort({ id: -1 }).limit(5).toArray();
     const recentToktokPost = await db.collection('community').find({ type: 'toktok' }).sort({ _id: -1 }).limit(5).toArray();
     // const recentExchange = await db.collection('exchange').find({}).sort({ _id: -1 }).limit(5).toArray();
-  
+
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(커뮤니티)',
@@ -176,14 +176,14 @@ router.get('/', async (req, res) => {
 router.get('/daily', async (req, res) => {
   try {
     const { perPage, page } = req.query
-    const ListsPerPage = Number(perPage); 
+    const ListsPerPage = Number(perPage);
     const currentPage = page || 1;
 
     const data = await db.collection('community').find({ type: 'daily' }).sort({ _id: -1 }).skip((currentPage - 1) * ListsPerPage).limit(ListsPerPage).toArray();
     const totalCount = await db.collection('community').countDocuments({ type: 'daily' });
 
     const numOfPage = Math.ceil(totalCount / ListsPerPage);
-    
+
     if (currentPage > numOfPage) {
       return res.json({ flag: false, message: '없는 페이지 입니다.', data: [] });
     }
@@ -230,7 +230,7 @@ router.post('/daily/insert', async (req, res) => {
 
     let imgUrl = req.body.imgUrl || '';
     let imgKey = req.body.imgKey || '';
-    
+
     // s3_delete
     if (imgKey) {
       const deleteImgKey = imgKey.filter(key => !content.includes(key));
@@ -252,18 +252,18 @@ router.post('/daily/insert', async (req, res) => {
       imgUrl = imgUrl.filter(url => content.includes(url));
       imgKey = imgKey.filter(key => content.includes(key));
     }
-  
-    await db.collection('community').insertOne({ 
-      id, 
-      title, 
-      content, 
-      imgUrl, 
-      imgKey, 
-      author, 
-      authorId: new ObjectId(authorId), 
-      date, 
-      type: 'daily', 
-      view: 0, 
+
+    await db.collection('community').insertOne({
+      id,
+      title,
+      content,
+      imgUrl,
+      imgKey,
+      author,
+      authorId: new ObjectId(authorId),
+      date,
+      type: 'daily',
+      view: 0,
       like: [],
       dislike: []
     });
@@ -295,7 +295,7 @@ router.delete('/daily/delete/:id', async (req, res) => {
     const data = await db.collection('community').findOne({ id: Number(req.params.id) });
 
     const deleteImgKey = data.imgKey;
-    
+
     // s3_delete
     if (deleteImgKey) {
 
@@ -314,15 +314,15 @@ router.delete('/daily/delete/:id', async (req, res) => {
       });
     }
 
-  await db.collection('community').deleteOne({ id: Number(req.params.id) });
-  res.json({
-    flag: true,
-    message: '데이터 삭제 성공'
-  });
+    await db.collection('community').deleteOne({ id: Number(req.params.id) });
+    res.json({
+      flag: true,
+      message: '데이터 삭제 성공'
+    });
   } catch (err) {
     console.error(err);
   }
-}); 
+});
 
 // DailyDog_Edit_List
 router.get('/daily/edit/:postId', async (req, res) => {
@@ -350,10 +350,10 @@ router.patch('/daily/edit/:postId', async (req, res) => {
     if (imgKey) {
       const prevImageItem = await db.collection('community').findOne({ _id: new ObjectId(req.params.postId) });
       const prevImages = prevImageItem.imgKey.map(key => { return key });
-      
+
       imgUrl = imgUrl.filter(url => content.includes(url));
       imgKey = imgKey.filter(key => content.includes(key));
-      
+
       const deleteImgKey = prevImages.filter(key => !imgKey.includes(key));
 
       deleteImgKey.forEach(image => {
@@ -372,7 +372,7 @@ router.patch('/daily/edit/:postId', async (req, res) => {
     }
 
     await db.collection('community').updateOne({
-      _id: new ObjectId(req.params.postId) 
+      _id: new ObjectId(req.params.postId)
     }, {
       $set: { title, content, imgUrl, imgKey }
     });
@@ -463,7 +463,7 @@ router.patch('/daily/likedown/:type', async (req, res) => {
 router.get('/daily/comment/:postId', async (req, res) => {
   try {
     const commentList = await db.collection('comment').find({ postId: new ObjectId(req.params.postId) }).toArray();
-    res.json(commentList)  
+    res.json(commentList)
   } catch (err) {
     console.error(err);
   }
@@ -503,7 +503,7 @@ router.delete('/daily/comment/delete/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
   }
-}); 
+});
 
 
 
