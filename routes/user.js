@@ -187,13 +187,10 @@ router.post('/register', async (req, res) => {
 
 // 로그인 불러오기
 router.get('/login', async (req, res) => {
-  // console.log(req.user);
-  // const user = req.user._id;
   try {
     if (req.user) {
       const userId = req.user._id;
       const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
-      // res.render('login');
       res.json({
         flag: true,
         message: '불러오기 성공',
@@ -205,12 +202,12 @@ router.get('/login', async (req, res) => {
         message: '비로그인 상태',
       })
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     res.json({
       flag: false,
-      message: '에러발생',
-    });
+      message: '로그인 상태가 아님'
+    })
   }
 })
 
