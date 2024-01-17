@@ -93,7 +93,7 @@ router.post('/plusCart', async (req, res) => {
       if (hasItem.length > 0) {
         // 이미 장바구니에 넣은 물건을 또 넣을 때
         const nowCount = hasItem[0].count;
-        await db.collection('cart').updateOne({ user, list: { $elemMatch: {postId: new ObjectId(postId)} }}, {$set:{'list.$.count' : nowCount+count }});
+        await db.collection('cart').updateOne({ user, list: { $elemMatch: { postId: new ObjectId(postId) } } }, { $set: { 'list.$.count': nowCount + count } });
       } else {
         // 장바구니는 있는데 없던 물건일 때
         const newArr = [...hasCart.list, {title, price, count, postId: new ObjectId(postId)}];
@@ -101,7 +101,7 @@ router.post('/plusCart', async (req, res) => {
       }
     } else {
       // 장바구니 첫 생성
-      await db.collection('cart').insertOne({ user, list: [{title, price, count, postId: new ObjectId(postId)}] });
+      await db.collection('cart').insertOne({ user, list: [{ title, price, count, postId: new ObjectId(postId) }] });
     }
     res.json({
       flag: true,
@@ -234,7 +234,7 @@ router.get('/detail/:postId', async (req, res) => {
     res.json({
       flag: true,
       message: '상세정보 불러오기 성공',
-      itemDetail, 
+      itemDetail,
     });
   } catch (err) {
     console.error(err);
@@ -267,15 +267,15 @@ router.post('/reviewInsert/:postId', upload.single('img'), async (req, res) => {
     const star = req.body.star;
     const imgKey = req.file?.key || 'NoImage';
     const user = req.user._id;
-    
+
     await db.collection('review').insertOne({ title, star, content, date, postId, imgUrl, imgKey, user });
     const reviweList = await db.collection('review').find({ postId: postId }).toArray();
     let sum = 0;
-    reviweList.map((item) => {sum = Number(item.star) + sum})
+    reviweList.map((item) => { sum = Number(item.star) + sum })
     const length = reviweList.length;
-    const rate = (sum/length).toFixed(1);
-    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
-    
+    const rate = (sum / length).toFixed(1);
+    await db.collection('shop').updateOne({ _id: new ObjectId(postId) }, { $set: { rate } });
+
     res.json({
       flag: true,
       message: '리뷰 등록 완료'
@@ -298,10 +298,10 @@ router.post('/reviewDelete', async (req, res) => {
     })
     const reviweList = await db.collection('review').find({ postId: postId }).toArray();
     let sum = 0;
-    reviweList.map((item) => {sum = Number(item.star) + sum})
+    reviweList.map((item) => { sum = Number(item.star) + sum })
     const length = reviweList.length;
-    const rate = (sum/length).toFixed(1);
-    await db.collection('shop').updateOne({_id: new ObjectId(postId)}, {$set: { rate }});
+    const rate = (sum / length).toFixed(1);
+    await db.collection('shop').updateOne({ _id: new ObjectId(postId) }, { $set: { rate } });
 
     res.json({
       flag: true,
