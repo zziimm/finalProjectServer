@@ -254,13 +254,15 @@ app.post(`/inChating`, async (req, res) => {
     }
     const lastChat = resulte.chatList.pop();
     const lastChatRoom = resulte.room;
+    const chatData = { lastChat, lastChatRoom }
+    
   
     io.emit('update', msg);
-    console.log(lastChatRoom);
-    console.log(loginUser.toString());
-    console.log(user2.toString());
+    console.log('룸'+lastChatRoom);
+    console.log('로그인유저'+loginUser.toString());
+    console.log('유저2'+user2.toString());
     if (lastChatRoom.find(user => user == loginUser.toString()) && lastChatRoom.find(user => user == user2.toString())) {
-      io.to(resulte.room).emit('updateChatDetail', lastChat);
+      io.to(resulte.room).emit('updateChatDetail', chatData);
       console.log('이프실행');
     }
     res.json({
