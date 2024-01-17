@@ -187,21 +187,27 @@ router.post('/register', async (req, res) => {
 
 // 로그인 불러오기
 router.get('/login', async (req, res) => {
-  // console.log(req.user);
-  // const user = req.user._id;
-  if (req.user) {
-    const userId = req.user._id;
-    const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
-    // res.render('login');
-    res.json({
-      flag: true,
-      message: '불러오기 성공',
-      data: result
-    })
-  } else {
+  try {
+    if (req.user) {
+      const userId = req.user._id;
+      const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
+      res.json({
+        flag: true,
+        message: '불러오기 성공',
+        data: result
+      })
+    }
+    else {
+      res.json({
+        flag: false,
+        message: '비로그인 상태',
+      })
+    }
+  } catch (error) {
+    console.error(error);
     res.json({
       flag: false,
-      message: '비로그인 상태',
+      message: '로그인 상태가 아님'
     })
   }
 })
