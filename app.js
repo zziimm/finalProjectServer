@@ -48,7 +48,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 app.use(cors({
   // origin: 'https://minton1000.netlify.app',
-  origin: 'https://mymung.netlify.app',
+  origin: ['https://mymung.netlify.app', 'http://localhost:3000'],
   credentials: true
 }));
 app.use(morgan('dev'));
@@ -90,16 +90,12 @@ app.use('/vintage', vintageCommunityRouter);
 // socket
 io.on('connection', (socket) => {
   console.log(io.httpServer._connections);
-
-  // 해당 방에 join할 때 이전 채팅 값 불러오기, 채팅 칠 때마다 db에 저장(누가보냈는지), 시간...
   console.log('유저접속됨');
   socket.on('login', async (server) => {
     console.log('login'+server);
     socket.join(server);
-    // io.emit('throwData', chatData);
   });
   
-
   // 실사용
   // socket.on('answer', async (data) => {
   //   // msg, user2, id(로그인/답장유져), room(이제 의미없어졌는데 그냥 두 사람 묶어두는 배열)
@@ -254,13 +250,15 @@ app.post(`/inChating`, async (req, res) => {
     }
     const lastChat = resulte.chatList.pop();
     const lastChatRoom = resulte.room;
+    const chatData = { lastChat, user2 }
+    
   
     io.emit('update', msg);
-    console.log(lastChatRoom);
-    console.log(loginUser.toString());
-    console.log(user2.toString());
+    console.log('룸'+lastChatRoom);
+    console.log('로그인유저'+loginUser.toString());
+    console.log('유저2'+user2.toString());
     if (lastChatRoom.find(user => user == loginUser.toString()) && lastChatRoom.find(user => user == user2.toString())) {
-      io.to(resulte.room).emit('updateChatDetail', lastChat);
+      io.to(resulte.room).emit('updateChatDetail', chatData);
       console.log('이프실행');
     }
     res.json({

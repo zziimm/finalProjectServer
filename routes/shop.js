@@ -35,19 +35,26 @@ const upload = multer({
 
 // 상품정보 불러오기 (전체)(초기 8개, 더보기 시 8개 추가)
 router.get('/', async (req, res) => {
-  // const category = req.params.category;
   let posts;
-  if (req.query.nextId) {
-    console.log('실행');
-    posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) } }).limit(8).toArray();
-  } else {
-    posts = await db.collection('shop').find({}).limit(8).toArray();
+  try {
+    if (req.query.nextId) {
+      console.log('실행');
+      posts = await db.collection('shop').find({ _id: { $gt: new ObjectId(req.query.nextId) } }).limit(8).toArray();
+    } else {
+      posts = await db.collection('shop').find({}).limit(8).toArray();
+    }
+    res.json({
+      flag: true,
+      message: '성공적으로 상품을 가져왔습니다.',
+      posts,
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '상품 불러오기 실패'
+    });
   }
-  res.json({
-    flag: true,
-    message: '성공적으로 상품을 가져왔습니다.',
-    posts,
-  });
 });
 
 // 상품정보 불러오기(초기 8개, 더보기 시 8개 추가)
@@ -70,13 +77,21 @@ router.get('/category/:cate', async (req, res) => {
 
 // 장바구니 불러오기
 router.post('/getCart', async (req, res) => {
-  const userId = req.user._id;
-  const result = await db.collection('cart').findOne({ user: userId });
-  res.json({
-    flag: true,
-    message: '장바구니 불러오기 성공',
-    result
-  });
+  try {
+    const userId = req.user._id;
+    const result = await db.collection('cart').findOne({ user: userId });
+    res.json({
+      flag: true,
+      message: '장바구니 불러오기 성공',
+      result
+    });
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag:false,
+      message: '장바구니 불러오기 실패',
+    })
+  }
 });
 
 // 장바구니 추가(로그인 한 사람)
@@ -109,6 +124,10 @@ router.post('/plusCart', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '장바구니 추가 실패',
+    })
   }
 });
 
@@ -130,6 +149,10 @@ router.post('/purchaseAdd', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '구매 목록 추가 실패'
+    });
   }
 });
 
@@ -146,13 +169,13 @@ router.post('/deleteCart', async (req, res) => {
       flag: true,
       message: '삭제 성공',
       result
-    })
+    });
   } catch (err) {
     console.error(err);
     res.json({
       flag: false,
       message: '삭제 실패'
-    })
+    });
   }
 });
 
@@ -238,6 +261,10 @@ router.get('/detail/:postId', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '상세정보 불러오기 실패'
+    });
   }
 });
 
@@ -253,6 +280,10 @@ router.get('/review/:postId', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '리뷰 불러오기 실패'
+    });
   }
 });
 
@@ -309,6 +340,10 @@ router.post('/reviewDelete', async (req, res) => {
     })
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '리뷰 삭제 실패'
+    })
   }
 });
 
@@ -320,7 +355,7 @@ router.get('/reviewDeleteAll', async (req, res) => {
     console.error(err);
   }
   res.json({
-    flag: true
+    flag: true,    
   })
 });
 
@@ -336,6 +371,11 @@ router.get('/qna/:postId', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: 'Q&N 불러오기 실패',
+      itemQna,
+    });
   }
 });
 
@@ -355,6 +395,10 @@ router.post('/qna/:postId', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: 'Q&A 등록 실패'
+    });
   }
 });
 
@@ -371,6 +415,10 @@ router.patch('/qnaComment/:qnaPostId', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: 'Q&A 답변 등록 실패'
+    });
   }
 });
 
@@ -386,6 +434,10 @@ router.get('/purchase', async (req, res) => {
     });
   } catch (err) {
     console.error(err);
+    res.json({
+      flag: false,
+      message: '구매 목록 불러오기 실패'
+    });
   }
 });
 

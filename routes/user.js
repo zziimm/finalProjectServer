@@ -187,21 +187,26 @@ router.post('/register', async (req, res) => {
 
 // 로그인 불러오기
 router.get('/login', async (req, res) => {
-  // console.log(req.user);
-  // const user = req.user._id;
-  if (req.user) {
-    const userId = req.user._id;
-    const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
-    // res.render('login');
-    res.json({
-      flag: true,
-      message: '불러오기 성공',
-      data: result
-    })
-  } else {
+  try {
+    if (req.user) {
+      const userId = req.user._id;
+      const result = await db.collection('userInfo').findOne({ _id: userId });
+      res.json({
+        flag: true,
+        message: '불러오기 성공',
+        data: result
+      })
+    } else {
+      res.json({
+        flag: false,
+        message: '비로그인 상태',
+      })
+    }
+  } catch (error) {
+    console.error(error);
     res.json({
       flag: false,
-      message: '비로그인 상태',
+      message: '로그인 상태가 아님'
     })
   }
 })
@@ -209,26 +214,33 @@ router.get('/login', async (req, res) => {
 
 // 로그인
 router.post('/login', (req, res, next) => {
-
-  passport.authenticate('local', (authError, user, info) => {
-    if (authError) {
-      return res.json(authError)
-    }
-    if (!user) {
-      return res.json(info.message)
-    }
-
-    req.login(user, (loginError) => {
-      if (loginError) return next(loginError);
-      // res.redirect('/')
-
-      res.json({
-        flag: true,
-        message: '로그인 성공',
-        user
+  try {
+    passport.authenticate('local', (authError, user, info) => {
+      if (authError) {
+        return res.json(authError)
+      }
+      if (!user) {
+        return res.json(info.message)
+      }
+  
+      req.login(user, (loginError) => {
+        if (loginError) return next(loginError);
+        // res.redirect('/')
+  
+        res.json({
+          flag: true,
+          message: '로그인 성공',
+          user
+        })
       })
-    })
-  })(req, res, next);
+    })(req, res, next);
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '에러발생'
+    });
+  }
 });
 
 
@@ -243,20 +255,28 @@ router.post('/login', (req, res, next) => {
 
 // 로그아웃
 router.get('/logout', (req, res, next) => {
-  req.logout((logoutError) => {
-    if (logoutError) return next(logoutError)
-    // res.redirect('/');
-    res.json({
-      flag: true,
-      message: '로그아웃 되었습니다'
+  try {
+    req.logout((logoutError) => {
+      if (logoutError) return next(logoutError)
+      // res.redirect('/');
+      res.json({
+        flag: true,
+        message: '로그아웃 되었습니다'
+      })
     })
-  })
+  } catch (err) {
+    console.error(err);
+    res.json({
+      flag: false,
+      message: '에러발생, 로그아웃 실패'
+    });
+  }
 })
 
 // 유저 정보 주기(마이페이지)
 router.get('/getUserInfo', async (req, res) => {
-  const user = req.user._id;
   try {
+    const user = req.user._id;
     const result = await db.collection('userInfo').findOne( {_id: user });
     console.log(result);
     res.json({
@@ -265,14 +285,18 @@ router.get('/getUserInfo', async (req, res) => {
     })
   } catch (error) {
     console.error(error);
+    res.json({
+      flag: false,
+      message: '페이지를 불러오는 중 에러가 발생했습니다.'
+    });
   }
 });
 
 // 유저 정보 변경
 router.post('/editPersonalInfo', async (req, res) => {
-  const { nick, dogType, dogName, dogAge } = req.body;
-  const user = req.user._id;
   try {
+    const { nick, dogType, dogName, dogAge } = req.body;
+    const user = req.user._id;
     if (nick === '') {
       throw new Error('닉네임을 입력해주세요!');
     }
