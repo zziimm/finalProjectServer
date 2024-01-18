@@ -606,9 +606,9 @@ router.post('/test/like', async (req, res) => {
 
 // 퍼스널독 페이지
 router.get('/toktok/PersonalDog', async (req, res) => {
-  console.log(req.user);
-  const { signDogType, signDogAge, signDogWeight } = req.user;
   try {
+    console.log(req.user);
+    const { signDogType, signDogAge, signDogWeight } = req.user;
     const toktokPost = await db.collection('community').find({ type: "toktok" }).toArray();
     // console.log(toktokPost);
     const vinPost = await db.collection('vincommunity').find({}).toArray();
@@ -671,37 +671,38 @@ router.get('/toktok/comment', async (req, res) => {
 
 // 육아톡톡 상세페이지
 router.get('/toktok/detail/:postId', async (req, res) => {
-  const postId = req.params.postId
-  const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
-  // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
-  const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
-  res.json({
-    flag: true,
-    message: '데이터 불러오기 성공(상세보기)',
-    postData,
-    // userData,
-    commentData
-  });
+  try {
+    const postId = req.params.postId
+    const postData = await db.collection('community').findOne({ _id: new ObjectId(postId) });
+    // const userData = await db.collection('userInfo').findOne({ _id: postData._id });
+    const commentData = await db.collection('comment').find({ postId: new ObjectId(postId) }).toArray();
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공(상세보기)',
+      postData,
+      // userData,
+      commentData
+    });
+  } catch (error) {
+    console.error(error);
+  }
 });
 
 // 커뮤니티 삽입_육아톡톡
 router.post('/toktok/insert', upload.single('imgUrl'), async (req, res) => {
-  console.log(req.body);
-  console.log(req.user);
-  const mydate = new Date();
-  // const userId = req.user._id;
-  // const inputdata = req.body.inputdata;
-  const title = req.body.title;
-  const content = req.body.content;
-  // const author = req.user || '';
-  const imgUrl = req.file?.location || '';
-  const imgKey = req.file?.key || '';
-  const like = [];
-  const view = [];
-  const user = req.user || '';
-  const date = mydate;
-
   try {
+    const mydate = new Date();
+    // const userId = req.user._id;
+    // const inputdata = req.body.inputdata;
+    const title = req.body.title;
+    const content = req.body.content;
+    // const author = req.user || '';
+    const imgUrl = req.file?.location || '';
+    const imgKey = req.file?.key || '';
+    const like = [];
+    const view = [];
+    const user = req.user || '';
+    const date = mydate;
     // await db.collection('community').insertOne({...inputdata, userId, imgUrl});
     await db.collection('community').insertOne({ title, content, /* author, */ imgUrl, imgKey, like, view, date, user, type: 'toktok' });
     res.json({
@@ -713,7 +714,7 @@ router.post('/toktok/insert', upload.single('imgUrl'), async (req, res) => {
   }
 });
 
-// 수정 (이미지)_육아톡톡
+// 수정 (이미지)_육아톡톡   ㅇㅇㄴㅇㅇㄴㅇㄴㅇㅇㅇ
 router.patch('/toktok/edit/:postId', upload.single('img'), async (req, res) => {
   const thisPost = await db.collection('community').findOne({ _id: req.params.postId });
   console.log(req.file);
@@ -748,8 +749,8 @@ router.patch('/toktok/edit/:postId', upload.single('img'), async (req, res) => {
 
 // 삭제_육아톡톡
 router.delete('/toktok/delete/:postId', async (req, res) => {
-  const postId = req.params.postId;
   try {
+    const postId = req.params.postId;
     // const thisPost = await db.collection('community').findOne({ _id: req.params.postId });   지민얘기
     // const bucketParams = { Bucket: 'finaltp', Key: thisPost.imgKey };
     // const run = async () => {
@@ -773,14 +774,14 @@ router.delete('/toktok/delete/:postId', async (req, res) => {
 
 // 댓글달기_육아톡톡
 router.post('/toktok/comment/:postId', async (req, res) => {
-  const mydate = new Date();
-  const postId = req.params.postId;
-  const user = req.body.user;
-  // const user = req.user._id;
-  // const userId = req.user.userId;
-  const comment = req.body.comment;
-  const date = mydate;
   try {
+    const mydate = new Date();
+    const postId = req.params.postId;
+    const user = req.body.user;
+    // const user = req.user._id;
+    // const userId = req.user.userId;
+    const comment = req.body.comment;
+    const date = mydate;
     await db.collection('comment').insertOne({
       user,
       // userId,
@@ -800,9 +801,8 @@ router.post('/toktok/comment/:postId', async (req, res) => {
 
 // 댓글 삭제 육아톡톡
 router.post('/toktok/ment/Del', async (req, res) => {
-  const commentId = req.body.commentId;
-  console.log(commentId);
   try {
+    const commentId = req.body.commentId;
     await db.collection('comment').deleteOne({ _id: new ObjectId(commentId) });
     res.json({
       flag: true,
@@ -815,9 +815,9 @@ router.post('/toktok/ment/Del', async (req, res) => {
 
 // 조회수 육아톡톡
 router.post('/toktok/view', async (req, res) => {
-  const postId = req.body.postId;
-  const userId = req.user;
   try {
+    const postId = req.body.postId;
+    const userId = req.user;
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거.view?.filter((a) => {
       return (a?.toString() == userId?._id.toString());
@@ -839,9 +839,9 @@ router.post('/toktok/view', async (req, res) => {
 
 // 좋아요 육아톡톢
 router.post('/toktok/like', async (req, res) => {
-  const postId = req.body.postId;
-  const userId = req.user;
   try {
+    const postId = req.body.postId;
+    const userId = req.user;
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거?.like.filter((a) => {
       return a.toString() === userId?._id.toString()
