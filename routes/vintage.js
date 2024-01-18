@@ -47,7 +47,7 @@ const upload = multer({
 // Fleamarket_List
 router.get('/', async (req, res) => {
   try {
-    let posts = await db.collection('vincommunity').find({}).sort({ _id: -1 }).toArray();
+    let posts = await db.collection('vincommunity').find({}).sort({ id: -1 }).toArray();
     
     if (req.query.select) {
       const { dogType, category, area, price, view } = req.query.select;
@@ -63,12 +63,14 @@ router.get('/', async (req, res) => {
       }
       if (price === 'min') {
         posts = posts.sort((a, b) => { return b.price - a.price });
-      } else {
+      } 
+      if (price === 'max') {
         posts = posts.sort((a, b) => { return a.price - b.price });
       }
       if (view === 'min') {
         posts = posts.sort((a, b) => { return b.view - a.view });
-      } else {
+      } 
+      if (view === 'max') {
         posts = posts.sort((a, b) => { return a.view - b.view });
       }
     }
@@ -97,13 +99,17 @@ router.get('/number', async (req, res) => {
 
 router.get('/detail/:postId', async (req, res) => {
   console.log(typeof(req.params.postId));
-  const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
-  console.log(postData);
-  res.json({
-    flag: true,
-    message: '데이터 불러오기 성공(상세보기)',
-    postData,
-  });
+  try {
+    const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
+    console.log(postData);
+    res.json({
+      flag: true,
+      message: '데이터 불러오기 성공(상세보기)',
+      postData,
+    });
+  } catch (err) {
+    console.error(err);
+  }
 });
 
 // router.get('/detail/:postId', async (req, res) => {
