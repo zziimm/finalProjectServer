@@ -62,18 +62,25 @@ router.get('/', async (req, res) => {
         posts = await db.collection('vincommunity').find({ area }).sort({ _id: -1 }).toArray();
       }
       if (price === 'min') {
+        posts = posts.sort((a, b) => { return b.price - a.price });
+      } 
+      if (price === 'max') {
         posts = posts.sort((a, b) => { return a.price - b.price });
       } 
       if (price === 'max') {
         posts = posts.sort((a, b) => { return b.price - a.price });
       }
       if (view === 'min') {
+        posts = posts.sort((a, b) => { return b.view - a.view });
+      } 
+      if (view === 'max') {
         posts = posts.sort((a, b) => { return a.view - b.view });
       } 
       if (view === 'max') {
         posts = posts.sort((a, b) => { return b.view - a.view });
       }
     }
+    // 수정
     res.json({
       flag: true,
       message: '데이터 불러오기 성공',
@@ -99,7 +106,9 @@ router.get('/number', async (req, res) => {
 
 router.get('/detail/:postId', async (req, res) => {
   try {
+    console.log(typeof(req.params.postId));
     const postData = await db.collection('vincommunity').findOne({ id: Number(req.params.postId) });
+    console.log(postData);
     res.json({
       flag: true,
       message: '데이터 불러오기 성공(상세보기)',

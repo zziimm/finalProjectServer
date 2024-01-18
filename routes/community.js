@@ -843,7 +843,7 @@ router.post('/toktok/like', async (req, res) => {
     const userId = req.user;
     const 중복제거 = await db.collection('community').findOne({ _id: new ObjectId(postId) });
     const 중복제거필터 = 중복제거?.like.filter((a) => {
-      return a.toString() === userId?._id.toString()
+      return a?.toString() === userId?._id.toString()
     });
     if (중복제거필터.length === 0) {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: userId?._id } });
