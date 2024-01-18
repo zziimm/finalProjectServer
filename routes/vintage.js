@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
     
     if (req.query.select) {
       const { dogType, category, area, price, view } = req.query.select;
-  
+
       if (dogType) {
         posts = await db.collection('vincommunity').find({ dogType }).sort({ _id: -1 }).toArray();
       }
