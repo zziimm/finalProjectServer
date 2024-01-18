@@ -190,7 +190,7 @@ router.get('/login', async (req, res) => {
   try {
     if (req.user) {
       const userId = req.user._id;
-      const result = await db.collection('userInfo').findOne({ _id: new ObjectId(userId) });
+      const result = await db.collection('userInfo').findOne({ _id: userId });
       res.json({
         flag: true,
         message: '불러오기 성공',
