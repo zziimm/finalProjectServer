@@ -63,12 +63,14 @@ router.get('/', async (req, res) => {
       }
       if (price === 'min') {
         posts = posts.sort((a, b) => { return b.price - a.price });
-      } else {
+      } 
+      if (price === 'max') {
         posts = posts.sort((a, b) => { return a.price - b.price });
       }
       if (view === 'min') {
         posts = posts.sort((a, b) => { return b.view - a.view });
-      } else {
+      } 
+      if (view === 'max') {
         posts = posts.sort((a, b) => { return a.view - b.view });
       }
     }
