@@ -74,6 +74,7 @@ router.get('/', async (req, res) => {
         posts = posts.sort((a, b) => { return a.view - b.view });
       }
     }
+    // 수정
     res.json({
       flag: true,
       message: '데이터 불러오기 성공',
