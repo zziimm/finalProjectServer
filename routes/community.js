@@ -403,8 +403,6 @@ router.patch('/daily/view/:id', async (req, res) => {
 router.patch('/daily/likeup/:type', async (req, res) => {
   const { postId, authorId } = req.body
 
-  console.log(req.params.type);
-
   try {
     if (req.params.type === 'up') {
       await db.collection('community').updateOne({ _id: new ObjectId(postId) }, { $push: { like: new ObjectId(authorId) } });
