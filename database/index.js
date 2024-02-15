@@ -5,7 +5,7 @@ const { MongoClient } = require('mongodb');
 // mongodb+srv://root:<password>@cluster0.kafipby.mongodb.net/?retryWrites=true&w=majority   ?retryWrites=true&w=majority 이건 옵션임 넣어도되고 안넣어도됨
 
 const { MONGO_ID, MONGO_PASSWORD } = process.env;
-const url = `mongodb+srv://${MONGO_ID}:${MONGO_PASSWORD}@cluster0.kafipby.mongodb.net/?retryWrites=true&w=majority`;
+const url = `mongodb+srv://${MONGO_ID}:${MONGO_PASSWORD}@cluster0.hqitiuj.mongodb.net/?retryWrites=true&w=majority`;
 
 
 // const url = `mongodb+srv://${MONGO_ID}:${MONGO_PASSWORD}@cluster0.kafipby.mongodb.net/`;
