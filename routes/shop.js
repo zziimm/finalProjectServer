@@ -10,7 +10,6 @@ const multerS3 = require('multer-s3');
 const { S3Client } = require('@aws-sdk/client-s3');
 const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
 
-
 // S3
 const s3 = new S3Client({
   credentials: {
